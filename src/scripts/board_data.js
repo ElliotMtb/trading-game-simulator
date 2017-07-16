@@ -155,22 +155,22 @@ app.rockImage.onload = function(){
 	//app.kineticLayer.draw();
 };
 
-app.rockImage.src = "./images/rock (150x134).jpg";
+app.rockImage.src = "../../assets/images/rock (150x134).jpg";
 
 app.brickImage = new Image()	
-app.brickImage.src = "./images/brick (150x132).jpg";
+app.brickImage.src = "../../assets/images/brick (150x132).jpg";
 
 app.wheatImage = new Image();
-app.wheatImage.src = "./images/wheat.jpg";
+app.wheatImage.src = "../../assets/images/wheat.jpg";
 
 app.sheepImage = new Image();
-app.sheepImage.src = "./images/sheep (150x141).jpg";
+app.sheepImage.src = "../../assets/images/sheep (150x141).jpg";
 
 app.woodImage = new Image();
-app.woodImage.src = "./images/wood.jpg";
+app.woodImage.src = "../../assets/images/wood.jpg";
 
 app.desertImage = new Image();
-app.desertImage.src = "./images/desert (150x139).jpg";
+app.desertImage.src = "../../assets/images/desert (150x139).jpg";
 
 app.rockPiece = function(){
 	this.type = 'rock';
