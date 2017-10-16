@@ -33,7 +33,7 @@ app.GameBoardController = (function() {
 
 			app.gamePlayMachine.NextTurn();
 
-			var playerProxy = GetPlayerProxy(app.gamePlayMachine.currentTurnPlayer);
+			var playerProxy = GetPlayerProxy(app.gamePlayMachine.currentTurnPlayer.data);
 
 			app.controlPanelController.OnActivePlayerChange(playerProxy);
 		});
@@ -42,7 +42,7 @@ app.GameBoardController = (function() {
 
 			app.gamePlayMachine.NextGamePhase();
 
-			var playerProxy = GetPlayerProxy(app.gamePlayMachine.currentTurnPlayer);
+			var playerProxy = GetPlayerProxy(app.gamePlayMachine.currentTurnPlayer.data);
 			
 			app.controlPanelController.OnActivePlayerChange(playerProxy);
 		});
@@ -110,13 +110,26 @@ app.GameBoardController = (function() {
 		
 		app.roadCenterPoints[roadCenterId].on('click', function(e){
 			
-			var currentPlayer = app.gamePlayMachine.GetCurrentPlayer();
+			var playerProxy = app.gamePlayMachine.GetCurrentPlayer();
 
-			// TODO: Use "global" road length
-			var road = piecesBuilder.MakeRoad(this.attrs.roadX, this.attrs.roadY, 20, currentPlayer["color"], this.attrs.angle);
-			
-			app.kineticLayer.add(road);
-			app.kineticLayer.draw();
+			if (isRoadPlaceable(playerProxy, "road", this.attrs.roadX, this.attrs.roadY)) {
+
+				// TODO: make a "place road" button and bind it here (like for city and settlement)
+				// road.on("click", function() {})
+				if (app.gamePlayMachine.currentGamePhase.data.name === "gameplay") {
+
+					playerProxy.spend("brick", 1);
+					playerProxy.spend("wood", 1);
+				}
+
+				playerProxy.deployUnit("road");
+
+				// TODO: Use "global" road length
+				var road = piecesBuilder.MakeRoad(this.attrs.roadX, this.attrs.roadY, 20, playerProxy["color"], this.attrs.angle);
+				
+				app.kineticLayer.add(road);
+				app.kineticLayer.draw();
+			}
 		});
 	};
 
@@ -135,25 +148,65 @@ app.GameBoardController = (function() {
 				"text": "Settlement"
 			});
 			
-			var playerProxy = app.GameBoardController.GetPlayerProxy(app.gamePlayMachine.currentTurnPlayer);
+			var playerProxy = GetPlayerProxy(app.gamePlayMachine.currentTurnPlayer.data);
 
 			var itemDrawColor = playerProxy["color"];
+			
+			if (isIntersectPlaceable(playerProxy, "settlement", intersectX, intersectY)) {
 
-			settlement.on("click", function() {
-				piecesBuilder.MakeSettlement(intersectX, intersectY, 10, itemDrawColor, app.kineticLayer);
-				app.kineticLayer.draw();
-			});
+				settlement.on("click", function() {
+
+					if (app.gamePlayMachine.currentGamePhase.data.name === "gameplay") {
+
+						playerProxy.spend("wheat", 1);
+						playerProxy.spend("sheep", 1);
+						playerProxy.spend("brick", 1);
+						playerProxy.spend("wood", 1);
+					}
+					else if (app.gamePlayMachine.currentGamePhase.data.name === "placement") {
+
+						// TODO: Decrement counter (for the type of unit placed) tracking all units to be placed
+						// this round of this phase (e.g. 1 road, 1 settlement to be placed per round)
+						// OPTION 2 - alternatively, only give the user the units to place at the beginning of the round
+						//
+						// holding them in a queue at the round-level management (i.e. instead of initializing
+						// player with all units right up front, wait to allocated them)
+						//
+						// OPTION 3 ....or, queue them up at the beginning of the round, and have the user fetch the allotment
+						// when their turn comes (I like this option, becuase I don't have any event that happens at the end of
+						// a round. Then, I guess I can signal the end of the placement phase when all users run out of their allotments
+						// ...which should can be detected when new turn begins and player has no resources)
+					}
+
+					playerProxy.deployUnit("settlement");
+					
+					piecesBuilder.MakeSettlement(intersectX, intersectY, 10, itemDrawColor, app.kineticLayer);
+					app.kineticLayer.draw();
+				});
+			}
 			
 			var city = $("<button>", {
 				"class": "city-btn",
 				"text": "City"
 			});
 			
-			city.on("click", function() {
-				piecesBuilder.MakeCity(intersectX, intersectY, 10, itemDrawColor, app.kineticLayer);
-				app.kineticLayer.draw();
-			});
-			
+			if (isIntersectPlaceable(playerProxy, "city", intersectX, intersectY)) {
+
+				city.on("click", function() {
+
+					if (app.gamePlayMachine.currentGamePhase.data.name === "gameplay") {
+
+						playerProxy.spend("wheat", 2);
+						playerProxy.spend("rock", 3);
+					}
+
+					playerProxy.deployUnit("city");
+					
+					piecesBuilder.MakeCity(intersectX, intersectY, 10, itemDrawColor, app.kineticLayer);
+					app.kineticLayer.draw();
+				});
+			}
+
 			$("#selectedIntersect").html("Selected Intersection: <br> Id: " + intersectId + "<br>" +
 				"Adjacent Hexes: " + app.intersectToHexesAdjacency[intersectionId] + "<br>" +
 				"Adjacent Intersections: " + app.intersectToIntersectAdjacency[intersectionId] + "<br>");
@@ -162,6 +215,54 @@ app.GameBoardController = (function() {
 		
 		});
 	};
+
+	function isIntersectPlaceable(playerProxy, unitType, intersectX, intersectY) {
+
+		if (isIntersectionOccupied(intersectX, intersectY))
+			return false;
+		
+		if (app.gamePlayMachine.currentGamePhase.data.name === "placement") {
+			if (notAlreadyPlacedUnits())
+				return true;
+		}
+		else {
+			if (canAffordPurchase(playerProxy, unitType))
+				return true;
+		}
+	}
+
+	function isRoadPlaceable(playerProxy, unitType, intersectX, intersectY) {
+	
+		if (isRoadOccupied(intersectX, intersectY))
+			return false;
+		
+		if (app.gamePlayMachine.currentGamePhase.data.name === "placement") {
+			if (notAlreadyPlacedUnits())
+				return true;
+		}
+		else {
+			if (canAffordPurchase(playerProxy, unitType))
+				return true;
+		}
+	}
+
+	function notAlreadyPlacedUnits() {
+
+		return true;
+	}
+
+	function canAffordPurchase(playerProxy, unitType) {
+
+
+	}
+
+	function isIntersectionOccupied(x, y) {
+		return false;
+	}
+
+	function isRoadOccupied(x, y) {
+		return false;
+	}
 
 	function Controller_OnStartGame() {
 
@@ -176,7 +277,7 @@ app.GameBoardController = (function() {
 
 			app.gamePlayMachine.Start();
 			
-			var playerProxy = GetPlayerProxy(app.gamePlayMachine.currentTurnPlayer);
+			var playerProxy = GetPlayerProxy(app.gamePlayMachine.currentTurnPlayer.data);
 
 			app.controlPanelController.OnActivePlayerChange(playerProxy);
 		}
@@ -201,12 +302,29 @@ app.GameBoardController = (function() {
 	*/
 	function GetPlayerProxy(player) {
 
+		console.log(player);
+		console.log(app.playerList);
+
+		var playerModel = app.playerList.get(player.get("id"));
+
 		return {
-			name: player.data.get("name"),
-			color: player.data.get("color"),
-			points: player.data.get("point"),
-			purchasedItems: player.data.get("purchasedItems"),
-			resources: player.data.get("resources")
+			name: player.get("name"),
+			color: player.get("color"),
+			points: player.get("point"),
+			purchasedItems: player.get("purchasedItems"),
+			resources: player.get("resources"),
+			deployUnit: function(type) {
+
+				playerModel.deployPurchase(type);
+			},
+			spend: function(type, quantity) {
+				
+				playerModel.spend(type, quantity);
+			},
+			addPurchase: function(type) {
+
+				playerModel.addPurchase(type);
+			}
 		};
 	}
 

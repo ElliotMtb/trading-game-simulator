@@ -5,7 +5,7 @@ app.GamePlay = (function() {
     // Placement-phase turn phases
     var unitPlacementTurnPhase = {
         name: "placeunit",
-        actions: []
+        actions: [retrievePlayerUnitsForTurn]
     };
 
     // Core gameplay-phase turn phases
@@ -76,11 +76,43 @@ app.GamePlay = (function() {
         return player;
     }
 
+    var unitsForSinglePlacementRound = [];
+
+    function dealStartingUnits() {
+
+        console.log(app.playerList.models);
+
+        app.playerList.models.map(function(player) {
+
+            var playerProxy = app.GameBoardController.GetPlayerProxy(player);
+
+            unitsForSinglePlacementRound.push("settlement", "road", "settlement", "road");
+
+            // TODO: Add these to a queue that gets popped from when a player starts a queue
+        });
+    }
+
+    function retrievePlayerUnitsForTurn() {
+        
+        var playerProxy = app.gamePlayMachine.GetCurrentPlayer();
+
+        var unit1 = unitsForSinglePlacementRound.pop();
+        var unit2 = unitsForSinglePlacementRound.pop();
+
+        // Assume that the fist time we hit the bottom of the bucket, it means everyone has finished
+        // placement
+        if (unit1 === undefined)
+           throw "End of Placement round! This player has no more pieces. Regular play should begin"
+
+        playerProxy.addPurchase(unit1);
+        playerProxy.addPurchase(unit2);
+    }
+
     HorseshoeTurnSequencer.prototype.Next = HorseshoeTurnSequencer_Next;
 
     var placementGamePhase = {
         name: "placement",
-        actions: [],
+        actions: [dealStartingUnits],
         turnPhases: new app.LinkedList.LinkedList([unitPlacementTurnPhase]),
         getTurnSequencer: function(players) { return new HorseshoeTurnSequencer(players)},
         getFirstPlayer: function(players) { return players.First()}
@@ -112,7 +144,7 @@ app.GamePlay = (function() {
     */
     function GamePlayMachine_GetCurrentPlayer() {
 
-        return app.GameBoardController.GetPlayerProxy(this.currentTurnPlayer);
+        return app.GameBoardController.GetPlayerProxy(this.currentTurnPlayer.data);
     }
 
     function GamePlayMachine_Start() {
