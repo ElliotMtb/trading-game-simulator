@@ -11,39 +11,39 @@
 <body>
   <app-root></app-root>
 
-  	<!-- Templates -->
-		<script type="text/template" id="item-template">
-			<div class="view">
-				<input class="toggle" type="checkbox" <%= name ? 'checked' : '' %>>
-				<label><%- name %></label>
-				<input class="edit" value="<%- name %>">
-				<button class="destroy">remove</button>
-				<br />
-				<button class="addPoint">add point</button>
-				<br />
-				<button class="addResource" value="wheat">add wheat</button>
-				<button class="addResource" value="brick">add brick</button>
-				<button class="addResource" value="wood">add wood</button>
-				<button class="addResource" value="rock">add rock</button>
-				<button class="addResource" value="sheep">add sheep</button>
-				<br />
-				<fieldset>
-				<legend>Color: </legend>
-				<input class="selectColor" name="player-<%- name%>-Color" type="radio" value="red" <%= color=='red' ? 'checked' : ''%>>Red</input>
-				<input class="selectColor" name="player-<%- name%>-Color" type="radio" value="blue" <%= color=='blue' ? 'checked' : ''%>>Blue</input>
-				<input class="selectColor" name="player-<%- name%>-Color" type="radio" value="green" <%= color=='green' ? 'checked' : ''%>>Green</input>
-				<input class="selectColor" name="player-<%- name%>-Color" type="radio" value="white" <%= color=='white' ? 'checked' : ''%>>White</input>
-				</fieldset>
-				<br />
-				<br />
-			</div>
-		</script>  
-		
-		<script type="text/template" id="intersect-template">
-			<div class="view">
-				<label>Intersection #<%- id%></label>
-				<button class="highlight">Highlight on board</button>
-			</div>
-		</script>
+      <!-- Templates -->
+        <script type="text/template" id="item-template">
+            <div class="view">
+                <input class="toggle" type="checkbox" <%= name ? 'checked' : '' %>>
+                <label><%- name %></label>
+                <input class="edit" value="<%- name %>">
+                <button class="destroy">remove</button>
+                <br />
+                <button class="addPoint">add point</button>
+                <br />
+                <button class="addResource" value="wheat">add wheat</button>
+                <button class="addResource" value="brick">add brick</button>
+                <button class="addResource" value="wood">add wood</button>
+                <button class="addResource" value="rock">add rock</button>
+                <button class="addResource" value="sheep">add sheep</button>
+                <br />
+                <fieldset>
+                <legend>Color: </legend>
+                <input class="selectColor" name="player-<%- name%>-Color" type="radio" value="red" <%= color=='red' ? 'checked' : ''%>>Red</input>
+                <input class="selectColor" name="player-<%- name%>-Color" type="radio" value="blue" <%= color=='blue' ? 'checked' : ''%>>Blue</input>
+                <input class="selectColor" name="player-<%- name%>-Color" type="radio" value="green" <%= color=='green' ? 'checked' : ''%>>Green</input>
+                <input class="selectColor" name="player-<%- name%>-Color" type="radio" value="white" <%= color=='white' ? 'checked' : ''%>>White</input>
+                </fieldset>
+                <br />
+                <br />
+            </div>
+        </script>  
+        
+        <script type="text/template" id="intersect-template">
+            <div class="view">
+                <label>Intersection #<%- id%></label>
+                <button class="highlight">Highlight on board</button>
+            </div>
+        </script>
 </body>
 </html>

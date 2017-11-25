@@ -43,27 +43,27 @@ app.IntersectionMap.push([17,18]);
 app.IntersectionMap.push([18,19]);
 
 /*
-	The algorithm that I came up with for creating intersection Ids and mapping the
-	intersection-to-intersection and intersection-to-hex adjacencies isn't what I would
-	call a natural/intuitive algorithm. Consequently, here is a "manual" listing of the
-	data, presented in a more logical ordering. This is a helpful way to do a quick-check,
-	to make sure things are making sense.
+    The algorithm that I came up with for creating intersection Ids and mapping the
+    intersection-to-intersection and intersection-to-hex adjacencies isn't what I would
+    call a natural/intuitive algorithm. Consequently, here is a "manual" listing of the
+    data, presented in a more logical ordering. This is a helpful way to do a quick-check,
+    to make sure things are making sense.
 */
 app.printManMappedLogicalOrderIntersectToHexTypes = function() {
-		
-	for(var x = 1; x <= app.IntersectionMap.length; x++)
-	{
-		console.log("Intersection position " + x + ":");
+        
+    for(var x = 1; x <= app.IntersectionMap.length; x++)
+    {
+        console.log("Intersection position " + x + ":");
 
-		for(var index = 0; index < app.IntersectionMap[x-1].length; index++)
-		{
-			//alert(app.ring[index].getAttr('id'));
-			var ringIndex = app.IntersectionMap[x-1][index];
-			//alert(app.ring[ringIndex].getAttr('id'));
+        for(var index = 0; index < app.IntersectionMap[x-1].length; index++)
+        {
+            //alert(app.ring[index].getAttr('id'));
+            var ringIndex = app.IntersectionMap[x-1][index];
+            //alert(app.ring[ringIndex].getAttr('id'));
 
-			console.log("\t" + app.ring[ringIndex].getAttr('hexType'));
-		}
-	}
+            console.log("\t" + app.ring[ringIndex].getAttr('hexType'));
+        }
+    }
 };
 
 // Hex 2 added
@@ -152,7 +152,7 @@ app.rockImage = new Image();
 // right now. Although I could have a check to make sure 
 // that all images are loaded correctly...then if not, use the colors...
 app.rockImage.onload = function(){
-	//app.kineticLayer.draw();
+    //app.kineticLayer.draw();
 };
 
 app.rockImage.src = "../../assets/images/rock (150x134).jpg";
@@ -173,137 +173,137 @@ app.desertImage = new Image();
 app.desertImage.src = "../../assets/images/desert (150x139).jpg";
 
 app.rockPiece = function(){
-	this.type = 'rock';
-	this.color = 'grey';
-	this.image = app.rockImage;
+    this.type = 'rock';
+    this.color = 'grey';
+    this.image = app.rockImage;
 
 };
 app.brickPiece = function(){
-	this.type = 'brick';
-	this.color = '#e3352b';
-	this.image = app.brickImage;
+    this.type = 'brick';
+    this.color = '#e3352b';
+    this.image = app.brickImage;
 };
 app.wheatPiece = function(){
-	this.type = 'wheat';
-	this.color = 'yellow';
-	this.image = app.wheatImage;
+    this.type = 'wheat';
+    this.color = 'yellow';
+    this.image = app.wheatImage;
 };
 app.sheepPiece = function(){
-	this.type = 'sheep';
-	this.color = '#8EF13C';
-	this.image = app.sheepImage;
+    this.type = 'sheep';
+    this.color = '#8EF13C';
+    this.image = app.sheepImage;
 };
 app.woodPiece = function(){
-	this.type = 'wood';
-	this.color = 'green';
-	this.image = app.woodImage;
+    this.type = 'wood';
+    this.color = 'green';
+    this.image = app.woodImage;
 };
 app.desertPiece = function(){
-	this.type = 'desert';
-	this.color = '#f8cd8b';
-	this.image = app.desertImage;
+    this.type = 'desert';
+    this.color = '#f8cd8b';
+    this.image = app.desertImage;
 };
 app.oceanPiece = function(){
-	this.type = 'ocean';
-	this.color = 'cyan';
-	this.image = null;
+    this.type = 'ocean';
+    this.color = 'cyan';
+    this.image = null;
 }
 
 // Num Pieces (definitions)
 app.NumPiece = function(value, color, probability, numDots, order){
-	this.value = value;
-	this.color = color;
-	this.probability = probability;
-	this.probDots = numDots;
-	this.order = order;
+    this.value = value;
+    this.color = color;
+    this.probability = probability;
+    this.probDots = numDots;
+    this.order = order;
 };
 
 app.createTwoPiece = function(order){
-	return new app.NumPiece(2, 'black', 0.03, 1, order);
+    return new app.NumPiece(2, 'black', 0.03, 1, order);
 };
 
 app.createTwelvePiece = function(order){
-	return new app.NumPiece(12, 'black', 0.03, 1, order);
+    return new app.NumPiece(12, 'black', 0.03, 1, order);
 };
-	
+    
 app.createThreePiece = function(order) {
-	return new app.NumPiece(3, 'black', 0.06, 2, order);
+    return new app.NumPiece(3, 'black', 0.06, 2, order);
 };
 
 app.createElevenPiece = function(order) {
-	return new app.NumPiece(11, 'black', 0.06, 2, order);
+    return new app.NumPiece(11, 'black', 0.06, 2, order);
 };
 
 app.createFourPiece = function(order) {
-	return new app.NumPiece(4, 'black', 0.08, 3, order);
+    return new app.NumPiece(4, 'black', 0.08, 3, order);
 };
 
 app.createTenPiece = function(order) {
-	return new app.NumPiece(10, 'black', 0.08, 3, order);
+    return new app.NumPiece(10, 'black', 0.08, 3, order);
 };
 
 app.createFivePiece = function(order) {
-	return new app.NumPiece(5, 'black', 0.11, 4, order);
+    return new app.NumPiece(5, 'black', 0.11, 4, order);
 };
 
 app.createNinePiece = function(order) {
-	return new app.NumPiece(9, 'black', 0.11, 4, order);
+    return new app.NumPiece(9, 'black', 0.11, 4, order);
 };
 
 app.createSixPiece = function(order) {
-	return new app.NumPiece(6, 'red', 0.14, 5, order);
+    return new app.NumPiece(6, 'red', 0.14, 5, order);
 };
 
 app.createEightPiece = function(order) {
-	return new app.NumPiece(8, 'red', 0.14, 5, order);
+    return new app.NumPiece(8, 'red', 0.14, 5, order);
 };
 
 app.createZeroPiece = function() {
-	return new app.NumPiece(0, null, null, null);
+    return new app.NumPiece(0, null, null, null);
 };
 
 app.NumPieces = [	app.createTwoPiece('B'),
-					app.createTwelvePiece('H'),
-					app.createThreePiece('D'),
-					app.createThreePiece('Q'),
-					app.createElevenPiece('I'),
-					app.createElevenPiece('R'),
-					app.createFourPiece('J'),
-					app.createFourPiece('N'),
-					app.createTenPiece('F'),
-					app.createTenPiece('L'),
-					app.createFivePiece('A'),
-					app.createFivePiece('O'),
-					app.createNinePiece('G'),
-					app.createNinePiece('M'),
-					app.createSixPiece('C'),
-					app.createSixPiece('P'),
-					app.createEightPiece('E'),
-					app.createEightPiece('K')
-				];
+                    app.createTwelvePiece('H'),
+                    app.createThreePiece('D'),
+                    app.createThreePiece('Q'),
+                    app.createElevenPiece('I'),
+                    app.createElevenPiece('R'),
+                    app.createFourPiece('J'),
+                    app.createFourPiece('N'),
+                    app.createTenPiece('F'),
+                    app.createTenPiece('L'),
+                    app.createFivePiece('A'),
+                    app.createFivePiece('O'),
+                    app.createNinePiece('G'),
+                    app.createNinePiece('M'),
+                    app.createSixPiece('C'),
+                    app.createSixPiece('P'),
+                    app.createEightPiece('E'),
+                    app.createEightPiece('K')
+                ];
 
 app.HexPieces = [];
 
 app.RegularHexPieces = [
-	new app.rockPiece(),
-	new app.rockPiece(),
-	new app.rockPiece(),
-	new app.brickPiece(),
-	new app.brickPiece(),
-	new app.brickPiece(),
-	new app.wheatPiece(),
-	new app.wheatPiece(),
-	new app.wheatPiece(),
-	new app.wheatPiece(),
-	new app.sheepPiece(),
-	new app.sheepPiece(),
-	new app.sheepPiece(),
-	new app.sheepPiece(),
-	new app.woodPiece(),
-	new app.woodPiece(),
-	new app.woodPiece(),
-	new app.woodPiece(),
-	new app.desertPiece()
+    new app.rockPiece(),
+    new app.rockPiece(),
+    new app.rockPiece(),
+    new app.brickPiece(),
+    new app.brickPiece(),
+    new app.brickPiece(),
+    new app.wheatPiece(),
+    new app.wheatPiece(),
+    new app.wheatPiece(),
+    new app.wheatPiece(),
+    new app.sheepPiece(),
+    new app.sheepPiece(),
+    new app.sheepPiece(),
+    new app.sheepPiece(),
+    new app.woodPiece(),
+    new app.woodPiece(),
+    new app.woodPiece(),
+    new app.woodPiece(),
+    new app.desertPiece()
 ];
 
 app.OceanPieces = [];
@@ -312,5 +312,5 @@ var oceanCount;
 
 for (oceanCount = 0; oceanCount < 18; oceanCount++)
 {
-	app.OceanPieces.push(new app.oceanPiece());
+    app.OceanPieces.push(new app.oceanPiece());
 }
