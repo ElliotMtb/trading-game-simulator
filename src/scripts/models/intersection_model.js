@@ -6,7 +6,8 @@ var IntersectionModel = (function() {
             defaults: {
                 id: '',
                 x: '',
-                y: ''
+                y: '',
+                occupyingPiece: ''
             },
             addAdjacentHex: function(hexId){
                 this.adjacentHexes.push(hexId);
@@ -16,6 +17,15 @@ var IntersectionModel = (function() {
                 app.vertices[this.id].setStroke("yellow");
                 app.vertices[this.id].setStrokeWidth(3);
                 app.vertices[this.id].draw();
+            },
+            getOccupyingPiece: function() {
+
+                return this.get('occupyingPiece');
+            },
+            setOccupyingPiece: function(piece) {
+                
+                this.set('occupyingPiece', piece);
+                console.log('INTERSECTION OCCUPPIED...occupyigPiece set to:' + JSON.stringify(this.get('occupyingPiece')));
             },
             alertAdjacencies: function() {
             

@@ -157,7 +157,7 @@ app.IntersectionBuilder = (function() {
 
     var createIntersection = function(id, x, y) {
         
-        app.hexIntersectList.create({'id':id,'x':x,'y':y});
+        app.hexIntersectList.create({'id':id,'x':x,'y':y, 'occupyingPiece': ''});
     };
             
     var checkForCollision = function (x,y){

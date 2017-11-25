@@ -135,6 +135,7 @@ app.GameBoardController = (function() {
 
     function Controller_BindIntersectClick(intersectionId) {
         
+        app.vertices[intersectionId].off('click');
         app.vertices[intersectionId].on('click', function(e){
 
             var intersectId = this.attrs.id;
@@ -152,7 +153,7 @@ app.GameBoardController = (function() {
 
             var itemDrawColor = playerProxy["color"];
             
-            if (isIntersectPlaceable(playerProxy, "settlement", intersectX, intersectY)) {
+            if (isIntersectPlaceable(playerProxy, "settlement", intersectX, intersectY, intersectId)) {
 
                 settlement.on("click", function() {
 
@@ -180,6 +181,8 @@ app.GameBoardController = (function() {
 
                     playerProxy.deployUnit("settlement");
                     
+                    placeIntersectionPiece(playerProxy.id, "settlement", intersectId);
+
                     piecesBuilder.MakeSettlement(intersectX, intersectY, 10, itemDrawColor, app.kineticLayer);
                     app.kineticLayer.draw();
                 });
@@ -190,7 +193,7 @@ app.GameBoardController = (function() {
                 "text": "City"
             });
             
-            if (isIntersectPlaceable(playerProxy, "city", intersectX, intersectY)) {
+            if (isIntersectPlaceable(playerProxy, "city", intersectX, intersectY, intersectId)) {
 
                 city.on("click", function() {
 
@@ -202,6 +205,8 @@ app.GameBoardController = (function() {
 
                     playerProxy.deployUnit("city");
                     
+                    placeIntersectionPiece(playerProxy.id, "city", intersectId);
+
                     piecesBuilder.MakeCity(intersectX, intersectY, 10, itemDrawColor, app.kineticLayer);
                     app.kineticLayer.draw();
                 });
@@ -216,10 +221,31 @@ app.GameBoardController = (function() {
         });
     };
 
-    function isIntersectPlaceable(playerProxy, unitType, intersectX, intersectY) {
+    function placeIntersectionPiece(playerId, unitType, intersectId) {
+
+        // Lookup intersect model and mark it as occupied by the game piece
+        var intersect = app.hexIntersectList.get(intersectId);
+        intersect.setOccupyingPiece({"type": unitType, "playerid": playerId});
+        
+        console.log("INTERSECTION PIECE PLACED: " + JSON.stringify(app.hexIntersectList.get(intersectId)));
+    }
+
+    function isIntersectPlaceable(playerProxy, unitType, intersectX, intersectY, intersectId) {
 
         if (isIntersectionOccupied(intersectX, intersectY))
             return false;
+
+        if (!isSettlementContiguousForPlayer(playerProxy, intersectX, intersectY, intersectId)) {
+
+            return false;
+        }
+
+        if (!isSettlementTwoAway(intersectX, intersectY, intersectId)) {
+
+            console.log("TWO AWAY CHECK FAILED");
+                
+            return false;
+        }
         
         if (app.gamePlayMachine.currentGamePhase.data.name === "placement") {
             if (notAlreadyPlacedUnits())
@@ -235,7 +261,11 @@ app.GameBoardController = (function() {
     
         if (isRoadOccupied(intersectX, intersectY))
             return false;
-        
+
+        if (!isRoadContiguousForPlayer()) {
+            return false;
+        }
+
         if (app.gamePlayMachine.currentGamePhase.data.name === "placement") {
             if (notAlreadyPlacedUnits())
                 return true;
@@ -254,6 +284,45 @@ app.GameBoardController = (function() {
     function canAffordPurchase(playerProxy, unitType) {
 
 
+    }
+
+    function isRoadContiguousForPlayer(playerProxy, x, y) {
+
+        return true;
+    }
+
+    function isSettlementTwoAway(x,y, intersectId) {
+
+        // Get current hex info
+
+        // Check all immediate neighbor intersections and their immediate neighbors
+        // If any settlement is found, then return false
+
+        var neighborInfo = app.intersectToIntersectAdjacency[intersectId];
+        console.log("Neighbor ids: " + neighborInfo);
+
+        var i = 0;
+        var current;
+        for (i = 0; i < neighborInfo.length; i++) {
+
+            current = app.hexIntersectList.get(neighborInfo[i]);
+
+            console.log("Checking occupation: " + neighborInfo[i] + "\n" + JSON.stringify(current.getOccupyingPiece()));
+
+            if (current.getOccupyingPiece() && current.getOccupyingPiece().type && current.getOccupyingPiece().type) {
+
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    function isSettlementContiguousForPlayer(playerProxy, x, y, intersectId) {
+
+        app.intersectToIntersectAdjacency[intersectId];
+
+        return true;
     }
 
     function isIntersectionOccupied(x, y) {
@@ -308,6 +377,7 @@ app.GameBoardController = (function() {
         var playerModel = app.playerList.get(player.get("id"));
 
         return {
+            id: player.get("id"),
             name: player.get("name"),
             color: player.get("color"),
             points: player.get("point"),
