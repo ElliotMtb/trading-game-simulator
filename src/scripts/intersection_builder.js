@@ -151,6 +151,11 @@ app.IntersectionBuilder = (function() {
                 var lastVertexY = app.vertices[lastIntersectionInSweep].attrs.y;
                 
                 placeRoadMarker(vertexX, lastVertexX, vertexY, lastVertexY, collisionIndex, lastIntersectionInSweep);
+
+                // TODO: Perhaps need to put road centerId into adjacency list for neighboring intersections
+                // ...an intersection would need a list of adjacent road segments
+                // ...it would be faster than having to derrive/compute every time
+                // from intersection neighbors
             }
         }
     };
@@ -253,7 +258,8 @@ app.IntersectionBuilder = (function() {
             id: roadCenterId,
             angle: theta,
             roadX: roadXCenter,
-            roadY: roadYCenter
+            roadY: roadYCenter,
+            occupyingPiece: ''
         });
         
         app.roadCenterPoints[roadCenterId].hide();

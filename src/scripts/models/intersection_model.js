@@ -18,6 +18,30 @@ var IntersectionModel = (function() {
                 app.vertices[this.id].setStrokeWidth(3);
                 app.vertices[this.id].draw();
             },
+            isOccupiedByPlayer: function(playerId) {
+                
+                console.log("Checking if occupied by player: " + playerId);
+
+                var piece = this.get('occupyingPiece');
+
+                if (piece && piece.playerId === playerId) {
+                    return true;
+                }
+
+                console.log("Occupied by: " + piece.playerId);
+
+                return false;
+            },
+            isOccupied: function() {
+
+                var piece = this.get('occupyingPiece');
+
+                if (piece && piece.type) {
+                    return true;
+                }
+
+                return false;
+            },
             getOccupyingPiece: function() {
 
                 return this.get('occupyingPiece');
@@ -25,7 +49,7 @@ var IntersectionModel = (function() {
             setOccupyingPiece: function(piece) {
                 
                 this.set('occupyingPiece', piece);
-                console.log('INTERSECTION OCCUPPIED...occupyigPiece set to:' + JSON.stringify(this.get('occupyingPiece')));
+                console.log('NEW INTERSECTION PLACEHOLDER...occupyigPiece set to:' + JSON.stringify(this.get('occupyingPiece')));
             },
             alertAdjacencies: function() {
             

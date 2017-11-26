@@ -112,7 +112,9 @@ app.GameBoardController = (function() {
             
             var playerProxy = app.gamePlayMachine.GetCurrentPlayer();
 
-            if (isRoadPlaceable(playerProxy, "road", this.attrs.roadX, this.attrs.roadY)) {
+            console.log("SELECTED ROAD :" + JSON.stringify([this].map(x => keyRoadData(x))));
+
+            if (isRoadPlaceable(playerProxy, "road", this.attrs.intersectionIds[0], this.attrs.intersectionIds[1], this.attrs.occupyingPiece)) {
 
                 // TODO: make a "place road" button and bind it here (like for city and settlement)
                 // road.on("click", function() {})
@@ -123,6 +125,8 @@ app.GameBoardController = (function() {
                 }
 
                 playerProxy.deployUnit("road");
+
+                installRoadPlaceholder(playerProxy.id, "road", this.attrs.id);
 
                 // TODO: Use "global" road length
                 var road = piecesBuilder.MakeRoad(this.attrs.roadX, this.attrs.roadY, 20, playerProxy["color"], this.attrs.angle);
@@ -181,7 +185,7 @@ app.GameBoardController = (function() {
 
                     playerProxy.deployUnit("settlement");
                     
-                    placeIntersectionPiece(playerProxy.id, "settlement", intersectId);
+                    installIntersectionPlaceholder(playerProxy.id, "settlement", intersectId);
 
                     piecesBuilder.MakeSettlement(intersectX, intersectY, 10, itemDrawColor, app.kineticLayer);
                     app.kineticLayer.draw();
@@ -205,7 +209,7 @@ app.GameBoardController = (function() {
 
                     playerProxy.deployUnit("city");
                     
-                    placeIntersectionPiece(playerProxy.id, "city", intersectId);
+                    installIntersectionPlaceholder(playerProxy.id, "city", intersectId);
 
                     piecesBuilder.MakeCity(intersectX, intersectY, 10, itemDrawColor, app.kineticLayer);
                     app.kineticLayer.draw();
@@ -221,11 +225,19 @@ app.GameBoardController = (function() {
         });
     };
 
-    function placeIntersectionPiece(playerId, unitType, intersectId) {
+    function installRoadPlaceholder(playerId, unitType, centerId) {
+        
+        var road = app.roadCenterPoints[centerId];
+        road.attrs.occupyingPiece = {"type": unitType, "playerId": playerId};
+
+        console.log("ROAD PIECE PLACED: " + JSON.stringify(road.attrs.id));
+    }
+
+    function installIntersectionPlaceholder(playerId, unitType, intersectId) {
 
         // Lookup intersect model and mark it as occupied by the game piece
         var intersect = app.hexIntersectList.get(intersectId);
-        intersect.setOccupyingPiece({"type": unitType, "playerid": playerId});
+        intersect.setOccupyingPiece({"type": unitType, "playerId": playerId});
         
         console.log("INTERSECTION PIECE PLACED: " + JSON.stringify(app.hexIntersectList.get(intersectId)));
     }
@@ -257,12 +269,12 @@ app.GameBoardController = (function() {
         }
     }
 
-    function isRoadPlaceable(playerProxy, unitType, intersectX, intersectY) {
-    
-        if (isRoadOccupied(intersectX, intersectY))
+    function isRoadPlaceable(playerProxy, unitType, neighborIntersect1, neighborIntersect2, occupyingPiece) {
+
+        if (isRoadOccupied(occupyingPiece))
             return false;
 
-        if (!isRoadContiguousForPlayer()) {
+        if (!isRoadContiguousForPlayer(playerProxy, neighborIntersect1, neighborIntersect2)) {
             return false;
         }
 
@@ -286,17 +298,126 @@ app.GameBoardController = (function() {
 
     }
 
-    function isRoadContiguousForPlayer(playerProxy, x, y) {
+    /*
+        Candidate road segment (edge) is contiguous if 1 of the following is true:
+        1. Immediately neighboring intersection is occupied by the same player
+        2. Immediately neighboring road segment (edge) is occupied by the same player
+    */
+    function isRoadContiguousForPlayer(playerProxy, neighborIntersect1, neighborIntersect2) {
 
-        return true;
+        // Neighboring road edges can be found as the midpoint between both neighboring intersections
+        // (on either side of selected road edge) and their respective neighbors
+
+        var neighbor1 = app.hexIntersectList.get(neighborIntersect1)
+        var neighbor2 = app.hexIntersectList.get(neighborIntersect2)
+
+        console.log("Neighbor intersects to check: " + neighborIntersect1 + "," + neighborIntersect2);
+        console.log("Neighbor1: " + JSON.stringify(neighbor1));
+        console.log("Neighbor2:" + JSON.stringify(neighbor2));
+
+        // First (easy check) - Is either road edge intersect neighbor occuppied by same player?
+        if (neighbor1.isOccupiedByPlayer(playerProxy.id) || neighbor2.isOccupiedByPlayer(playerProxy.id)) {
+            return true;
+        }
+        
+        // Second (if first condition not true) - Does either intersect neighbor have 1 or more 'friendly' adjecent roads (ONLY IF neighbor not occupied by other player)
+        //      Fetch adjacent roads (for neighbor vertex/intersection):
+        //          For each external intersection neighbor (non-self neighbor):
+        //              Adjacent road segment = app.roadCenterPoints where 'intersectionIds' contains BOTH current intersectionId AND neighbor id of interest
+        //
+        //      Amongst all fetched road segments, if 1 or more is occupied by the player, then return true
+
+        // Check neighbor 1
+        if (neighbor1.isOccupied() === false) {
+
+            console.log("Neighbor 1 not occupied");
+
+            if (playerOwnsRoadAdjacentToNeighborIntersection(neighborIntersect1, playerProxy.id)) {
+                return true;
+            }
+        }
+
+        // Check neighbor 2
+        if (neighbor2.isOccupied() === false) {
+
+            console.log("Neighbor 2 not occupied");
+
+            if (playerOwnsRoadAdjacentToNeighborIntersection(neighborIntersect2, playerProxy.id)) {
+                return true;
+            }
+        }
+
+        function playerOwnsRoadAdjacentToNeighborIntersection(roadNeighborIntersectId, currentPlayerId) {
+
+            var neighborAdjList = app.intersectToIntersectAdjacency[roadNeighborIntersectId];
+
+            console.log("Neighbor adjacency list: " + neighborAdjList);
+
+            var adjacentRoadSegments = [];
+
+            var i = 0;
+            for (i = 0; i < neighborAdjList.length; i++) {
+
+                if (neighborAdjList[i] !== roadNeighborIntersectId) {
+
+                    // where 'intersectionIds' contains BOTH current intersectionId AND neighbor id of interest
+                    function whereContainsBothIds(road) {
+                        
+                        // console.log("Road: " + JSON.stringify(road.attrs));
+                        // console.log("Road attrs intersect ids: " + road.attrs.intersectionIds[0]);
+
+                        if (road.attrs.intersectionIds.indexOf(roadNeighborIntersectId) > -1 &&
+                            road.attrs.intersectionIds.indexOf(neighborAdjList[i]) > -1) {
+                            return true;
+                        }
+
+                        return false;
+                    }
+
+                    //console.log("Roads on board: " + JSON.stringify(app.roadCenterPoints));
+
+                    var roadSegment = app.roadCenterPoints.filter(whereContainsBothIds);
+                    console.log("Road segment: " + JSON.stringify(roadSegment.map(x => keyRoadData(x))));
+
+                    adjacentRoadSegments = adjacentRoadSegments.concat(roadSegment);
+
+                }
+            }
+
+            console.log("Adjacent road segments: " + JSON.stringify(adjacentRoadSegments.map(x => keyRoadData(x))));
+
+            var any = adjacentRoadSegments.filter(function (seg) {
+                if (seg.attrs.occupyingPiece &&
+                    seg.attrs.occupyingPiece.playerId === currentPlayerId) {
+                    
+                    return true;
+                }
+            });
+
+            console.log("Friendly roads adjacent to neighbor intersect?: " + JSON.stringify(any.map(x => keyRoadData(x))));
+
+            if (any.length >= 1) {
+                return true;
+            }
+
+            return false;
+        }
+
+        return false;
     }
 
+    function keyRoadData(roadSeg) {
+        return {
+            'intersectionIds': roadSeg.attrs.intersectionIds,
+            'occupyingPiece': roadSeg.attrs.occupyingPiece
+        };
+    }
+
+    /*
+        Check all immediate neighbor intersections (note: this includes selected intersectionId)
+        If any settlement is found, then return false
+    */
     function isSettlementTwoAway(x,y, intersectId) {
-
-        // Get current hex info
-
-        // Check all immediate neighbor intersections and their immediate neighbors
-        // If any settlement is found, then return false
 
         var neighborInfo = app.intersectToIntersectAdjacency[intersectId];
         console.log("Neighbor ids: " + neighborInfo);
@@ -309,7 +430,7 @@ app.GameBoardController = (function() {
 
             console.log("Checking occupation: " + neighborInfo[i] + "\n" + JSON.stringify(current.getOccupyingPiece()));
 
-            if (current.getOccupyingPiece() && current.getOccupyingPiece().type && current.getOccupyingPiece().type) {
+            if (current.isOccupied()) {
 
                 return false;
             }
@@ -329,7 +450,11 @@ app.GameBoardController = (function() {
         return false;
     }
 
-    function isRoadOccupied(x, y) {
+    function isRoadOccupied(roadSeg) {
+
+        if (roadSeg && roadSeg.type) {
+            return true;
+        }
         return false;
     }
 
