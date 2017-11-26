@@ -48,9 +48,10 @@ app.IntersectionBuilder = (function() {
             x: vertexX,
             y: vertexY,
             radius: 10,
-            fill: 'magenta',
+            fill: 'grey',
             stroke: 'black',
             strokeWidth: 1,
+            opacity: 0.75,
             id: intersectionId
         });
         
@@ -253,6 +254,7 @@ app.IntersectionBuilder = (function() {
             radius: 10,
             fill: 'white',
             stroke: 'black',
+            opacity: 0.75,
             strokeWidth: 1,
             intersectionIds: [intersectId1, intersectId2],
             id: roadCenterId,

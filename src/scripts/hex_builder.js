@@ -34,6 +34,7 @@ app.HexBuilder = (function() {
                 hexNumber: numPiece.value,
                 stroke: 'black',
                 strokeWidth: 1,
+                opacity: 0.75,
                 id: hexId
             });
             
@@ -88,6 +89,7 @@ app.HexBuilder = (function() {
             fill: hexInfo.color,
             stroke: 'black',
             strokeWidth: 1,
+            opacity: 0.3,
             id: hexId
         });
         
