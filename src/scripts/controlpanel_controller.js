@@ -2,9 +2,29 @@ var app = app || {};
 
 app.ControlPanelController = (function() {
 
-    function Controller() {}
+    function Controller() {
+
+        var currentPlayerProxy;
+
+        this.setCurrentPlayer = function(playerProxy) {
+            currentPlayerProxy = playerProxy;
+        }
+
+        this.getCurrentPlayer = function() {
+            return currentPlayerProxy;
+        }
+    }
 
     function Controller_OnActivePlayerChange(playerProxy) {
+
+        this.setCurrentPlayer(playerProxy);
+
+        var propertiesDiv = $("#active-player-properties");
+
+        populatePropertiesPane(propertiesDiv, this.getCurrentPlayer());
+    }
+
+    function populatePropertiesPane(propertiesDiv, playerProxy) {
 
         var playerLabel = $("<span>", {
             style: "color:" + playerProxy["color"] + ";",
@@ -13,7 +33,6 @@ app.ControlPanelController = (function() {
 
         var itemsLabel = $("<label>", {html: "Purchased Items: "});
         var resourcesLabel = $("<label>", {html: "Resources: "});
-        var propertiesDiv = $("#active-player-properties");
 
         propertiesDiv.empty();
 
@@ -38,10 +57,15 @@ app.ControlPanelController = (function() {
 
             propertiesDiv.append("<span>" + r + ": " + resources[r] + "</span><br>");
         }
+    }
 
+    function Controller_Refresh(playerProxy) {
+
+        this.OnActivePlayerChange(playerProxy);
     }
 
     Controller.prototype.OnActivePlayerChange = Controller_OnActivePlayerChange;
+    Controller.prototype.Refresh = Controller_Refresh;
     
     return {
 		Controller : Controller

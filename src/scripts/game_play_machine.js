@@ -130,12 +130,27 @@ app.GamePlay = (function() {
 
     function GamePlayMachine(players) {
 
+        // TODO: should make these vars actually private and expose them only through 'priveleged' getter/setters
         this.playersLinkedList = players;
         this.gamePhases = gamePhases;
 
         this.currentGamePhase = null;
         this.currentTurnPhase = null;
         this.currentTurnPlayer = null;
+        
+        var currentDieRoll = 0;
+
+        this.getCurrentDieRoll = function () {
+            return currentDieRoll;
+        }
+
+        this.setCurrentDieRoll = function(number) {
+
+            if (!Number.isInteger(number) || number < 2 || number > 12)
+                throw "Error. Current die roll must be set to an integer between 2 and 12";
+
+            currentDieRoll = number
+        }
     }
 
     /*
@@ -230,11 +245,128 @@ app.GamePlay = (function() {
         this.NextTurnPhase();
     }
 
+    function GamePlayMachine_OnDieRoll() {
+
+        // Distribute resources to all players
+        //    Utilizing
+        //      app.hexintersectlist ....model getOccupyingPiece()
+        //      app.intersectToHexesAdjacency
+        //      playerProxy.addResource(type)
+
+        // Foreach hex where number piece = this.getCurrentDieRoll() AND hex has 1 or more occupied vertices
+        //      Foreach occupied intersection (whether city or settlement)
+        //          Qty to distribute = 2 if occupyingPiece.type = 'city' else 1
+        //          Type is type of hex
+        //          Add qty and type of resource to occupying player (occupyingPiece.playerId)
+
+        var currentDieRoll = this.getCurrentDieRoll();
+
+        // Note: This is weird because app.ring is an object, so can't filter on it (can only filter on ids))
+        var idsOfRolledHexes = Object.keys(app.ring).filter(x => app.ring[x].getAttr('hexNumber') === currentDieRoll);
+        console.log("Rolled hex ids: " + JSON.stringify(idsOfRolledHexes));
+
+        var j;
+        for (j = 0; j < idsOfRolledHexes.length; j++) {
+
+            var rolledHexId = idsOfRolledHexes[j];
+            console.log("Hex id: " + rolledHexId);
+
+            dispurseResourcesForRolledHex(rolledHexId);
+        }
+    }
+
+    function dispurseResourcesForRolledHex(rolledHexId) {
+
+        var disburseType;
+        
+        disburseType = app.ring[rolledHexId].getAttr('hexType');
+        console.log("Disbursement data: " + disburseType);
+
+        var playerDispursements = getPlayerDispursements(rolledHexId);
+        
+        var i;
+        for (i = 0; i < playerDispursements.length; i++) {
+            dispurseResourceToPlayer(playerDispursements[i], disburseType);
+        }
+    }
+
+    function dispurseResourceToPlayer(playerDispursement, disburseType) {
+
+        var playerProxy = playerDispursement.playerProxy;
+        var qty = playerDispursement.quantity;
+
+        playerProxy.addMultipleResources(disburseType, qty);
+    }
+
+    function getPlayerDispursements(hexId) {
+
+        var occupiedIntersections = app.hexIntersectList.filter(x => isIntersectOccupiedAndTouchingHex(x, hexId));
+        console.log("Occupied relevant intersections: " + JSON.stringify(occupiedIntersections));
+
+        return occupiedIntersections.map(x => getDispurseData(x));
+    }
+
+    function getDispurseData(intersect) {
+
+        var disburseQty = 0;
+
+        piece = intersect.getOccupyingPiece();
+        console.log("Occupied intersection " + i + " :" + JSON.stringify(piece));
+
+        // Lookup occupying piece owner (player)
+        // TODO: probably don't want to use the global playerlist...should put this in
+        // its own function
+        playerProxy = app.GameBoardController.GetPlayerProxy(app.playerList.get(piece.playerId));
+
+        
+        // Apply disbursement
+        if (piece.type === 'city') {
+
+            disburseQty = 2;
+        }
+        else if (piece.type === 'settlement') {
+
+            disburseQty = 1;
+        }
+        else {
+            throw "Error. Unexpected piece occupying intersection. Disbursement quantity cannot be determined";
+        }
+
+        return { "playerProxy" : playerProxy, "quantity" : disburseQty };
+    }
+
+    function isIntersectOccupiedAndTouchingHex(intersect, hexId) {
+
+        if (intersect.isOccupied()) {
+
+            console.log("Checking if occupied intersect is touching relevant hex...");
+
+            var intersectId = intersect.get('id');
+
+            var hexesTouching = app.intersectToHexesAdjacency[intersectId];
+
+            // console.log("Intersect id: " + intersectId);
+            // console.log("Hexes touching: " + JSON.stringify(hexesTouching));
+            // console.log("typeof(Hexes touching): " + JSON.stringify(typeof(Object.keys(hexesTouching).map(x => hexesTouching[x]))));
+            // console.log("typeof(each Hexes touching): " + JSON.stringify(hexesTouching.map(x => typeof(x))));
+            // console.log("Target hexId: " + hexId);
+            // console.log("typeof(target hexId): " + typeof(hexId));
+
+            if (hexesTouching.indexOf(parseInt(hexId)) > -1) {
+                console.log("Occupied intersect is touching target hex!");
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
     GamePlayMachine.prototype.Start = GamePlayMachine_Start;
     GamePlayMachine.prototype.NextTurnPhase = GamePlayMachine_NextTurnPhase;
     GamePlayMachine.prototype.NextTurn = GamePlayMachine_NextTurn;
     GamePlayMachine.prototype.NextGamePhase = GamePlayMachine_NextGamePhase;
     GamePlayMachine.prototype.GetCurrentPlayer = GamePlayMachine_GetCurrentPlayer;
+    GamePlayMachine.prototype.OnDieRoll = GamePlayMachine_OnDieRoll;
 
     return {
         GamePlayMachine : GamePlayMachine

@@ -46,6 +46,32 @@ app.GameBoardController = (function() {
             
             app.controlPanelController.OnActivePlayerChange(playerProxy);
         });
+
+        $("#rollDice").on("click", function() {
+
+            var dieOne = Math.round(Math.random()*5);
+            var dieTwo = Math.round(Math.random()*5);
+
+            var diceImgs = [
+                "../assets/images/dice_1.png",
+                "../assets/images/dice_2.png",
+                "../assets/images/dice_3.png",
+                "../assets/images/dice_4.png",
+                "../assets/images/dice_5.png",
+                "../assets/images/dice_6.png"
+            ];
+
+            $("#dieOne").attr("src", diceImgs[dieOne]);
+            $("#dieTwo").attr("src", diceImgs[dieTwo]);
+
+            app.gamePlayMachine.setCurrentDieRoll(2 + dieOne + dieTwo);
+
+            console.log("Die roll: " + app.gamePlayMachine.getCurrentDieRoll());
+
+            app.gamePlayMachine.OnDieRoll();
+
+            app.controlPanelController.Refresh(app.gamePlayMachine.GetCurrentPlayer());
+        });
         
     }
 
@@ -133,6 +159,10 @@ app.GameBoardController = (function() {
                 
                 app.kineticLayer.add(road);
                 app.kineticLayer.draw();
+
+                var updatedPlayerInfo = app.gamePlayMachine.GetCurrentPlayer();
+                console.log("Current player stats after road placement: " + JSON.stringify(updatedPlayerInfo));
+                app.controlPanelController.Refresh(updatedPlayerInfo);
             }
         });
     };
@@ -519,6 +549,17 @@ app.GameBoardController = (function() {
             addPurchase: function(type) {
 
                 playerModel.addPurchase(type);
+            },
+            addResource: function(type) {
+
+                playerModel.addResource(type);
+            },
+            addMultipleResources: function(type, qty) {
+
+                var i;
+                for (i = 0; i < qty; i++) {
+                    playerModel.addResource(type);
+                }
             }
         };
     }
