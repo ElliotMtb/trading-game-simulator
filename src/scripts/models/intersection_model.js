@@ -25,6 +25,8 @@ var IntersectionModel = (function() {
                 var piece = this.get('occupyingPiece');
 
                 if (piece && piece.playerId === playerId) {
+                    console.log("Cofirmed occupied by player: " + playerId);
+                
                     return true;
                 }
 

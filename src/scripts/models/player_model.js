@@ -25,14 +25,16 @@ app.Player = Backbone.Model.extend({
 
         var currentAmt = resources[type];
 
-        var isValidType = app.RegularHexPieces.some(function(hexPiece) {
-            return hexPiece.type === type;
-        });
+        console.log("Stringified pieces: " + JSON.stringify(app.RegularHexPieces));
+
+        var hexesMatchingType = Object.keys(app.ring).filter(x => app.ring[x].getAttr('hexType') === type);
+        var isValidType = hexesMatchingType.length > 0;
+
+        console.log("Type to spend: " + typeof(type) + " " + type);
 
         if (isValidType === false)
             throw "Error. Invalid resource type sepcified for player to spend";
-        if (type !== "asdfas")
-            throw "Error. Invalid resource type specified";
+        
         if (currentAmt - quantity < 0)
             throw "Error. Player has insufficient resources.";
 

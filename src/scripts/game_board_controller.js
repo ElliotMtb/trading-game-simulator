@@ -148,6 +148,8 @@ app.GameBoardController = (function() {
 
                     playerProxy.spend("brick", 1);
                     playerProxy.spend("wood", 1);
+
+                    playerProxy.addPurchase('road');
                 }
 
                 playerProxy.deployUnit("road");
@@ -187,7 +189,7 @@ app.GameBoardController = (function() {
 
             var itemDrawColor = playerProxy["color"];
             
-            if (isIntersectPlaceable(playerProxy, "settlement", intersectX, intersectY, intersectId)) {
+            if (isIntersectPlaceable(playerProxy, "settlement", intersectId)) {
 
                 settlement.on("click", function() {
 
@@ -197,6 +199,8 @@ app.GameBoardController = (function() {
                         playerProxy.spend("sheep", 1);
                         playerProxy.spend("brick", 1);
                         playerProxy.spend("wood", 1);
+
+                        playerProxy.addPurchase('settlement');
                     }
                     else if (app.gamePlayMachine.currentGamePhase.data.name === "placement") {
 
@@ -227,7 +231,7 @@ app.GameBoardController = (function() {
                 "text": "City"
             });
             
-            if (isIntersectPlaceable(playerProxy, "city", intersectX, intersectY, intersectId)) {
+            if (isIntersectPlaceable(playerProxy, "city", intersectId)) {
 
                 city.on("click", function() {
 
@@ -235,6 +239,8 @@ app.GameBoardController = (function() {
 
                         playerProxy.spend("wheat", 2);
                         playerProxy.spend("rock", 3);
+
+                        playerProxy.addPurchase('city');
                     }
 
                     playerProxy.deployUnit("city");
@@ -272,34 +278,72 @@ app.GameBoardController = (function() {
         console.log("INTERSECTION PIECE PLACED: " + JSON.stringify(app.hexIntersectList.get(intersectId)));
     }
 
-    function isIntersectPlaceable(playerProxy, unitType, intersectX, intersectY, intersectId) {
+    function isSettlementPlaceable(playerProxy, intersectId) {
 
-        if (isIntersectionOccupied(intersectX, intersectY))
-            return false;
-
-        if (!isSettlementContiguousForPlayer(playerProxy, intersectX, intersectY, intersectId)) {
-
-            return false;
+        if (app.gamePlayMachine.currentGamePhase.data.name === "gameplay") {
+            if (!isSettlementContiguousForPlayer(playerProxy, intersectId))
+                return false;
         }
 
-        if (!isSettlementTwoAway(intersectX, intersectY, intersectId)) {
+        // Note that an already occupied intersection fails the two away check as well
+        if (!isSettlementTwoAway(intersectId)) {
 
             console.log("TWO AWAY CHECK FAILED");
-                
             return false;
         }
-        
-        if (app.gamePlayMachine.currentGamePhase.data.name === "placement") {
-            if (notAlreadyPlacedUnits())
-                return true;
+
+        return true;
+    }
+
+    function isCityPlaceable(playerProxy, intersectId) {
+
+        if (hasOwnSettlement(playerProxy, intersectId))
+            return true;
+
+        return false;
+    }
+
+    function hasOwnSettlement(playerProxy, intersectId) {
+
+        var intersect = app.hexIntersectList.get(intersectId);
+
+        if (intersect.isOccupied() &&
+            intersect.getOccupyingPiece().type === "settlement" &&
+            intersect.getOccupyingPiece().playerId === playerProxy.id)
+            return true;
+
+        return false;
+    }
+
+    function isIntersectPlaceable(playerProxy, unitType, intersectId) {
+
+        if (app.gamePlayMachine.currentGamePhase.data.name === "gameplay") {
+            if (!canAffordPurchase(playerProxy, unitType))
+                return false;
+        }
+
+        if (unitType === 'settlement') {
+            
+            return isSettlementPlaceable(playerProxy, intersectId);
+        }
+        else if (unitType === 'city') {
+
+            console.log("Checking city bindability...");
+
+            return isCityPlaceable(playerProxy, intersectId);
         }
         else {
-            if (canAffordPurchase(playerProxy, unitType))
-                return true;
+            throw "Error. Unknown unit type. Cannot determine if intersection is placeable";
         }
+
     }
 
     function isRoadPlaceable(playerProxy, unitType, neighborIntersect1, neighborIntersect2, occupyingPiece) {
+
+        if (app.gamePlayMachine.currentGamePhase.data.name === "gameplay") {
+            if (!canAffordPurchase(playerProxy, unitType))
+                return false;
+        }
 
         if (isRoadOccupied(occupyingPiece))
             return false;
@@ -308,24 +352,36 @@ app.GameBoardController = (function() {
             return false;
         }
 
-        if (app.gamePlayMachine.currentGamePhase.data.name === "placement") {
-            if (notAlreadyPlacedUnits())
-                return true;
-        }
-        else {
-            if (canAffordPurchase(playerProxy, unitType))
-                return true;
-        }
-    }
-
-    function notAlreadyPlacedUnits() {
-
         return true;
     }
 
     function canAffordPurchase(playerProxy, unitType) {
 
+        if (unitType === 'city') {
+            
+            if (playerProxy.resources['rock'] - 3 >= 0 &&
+                playerProxy.resources['wheat'] - 2 >= 0)
+                return true;
+        }
+        else if (unitType === 'settlement') {
 
+            if (playerProxy.resources['brick'] - 1 >= 0 &&
+                playerProxy.resources['wood'] - 1 >= 0 &&
+                playerProxy.resources['wheat'] - 1 >= 0 &&
+                playerProxy.resources['sheep'] - 1 >= 0)
+                return true;
+        }
+        else if (unitType === 'road') {
+
+            if (playerProxy.resources['brick'] - 1 >= 0 &&
+                playerProxy.resources['wood'] - 1 >= 0)
+                return true;
+        }
+        else {
+            throw "Error. Cannot determine affordability of unkonwn unitType";
+        }
+
+        return false;
     }
 
     /*
@@ -345,7 +401,7 @@ app.GameBoardController = (function() {
         console.log("Neighbor1: " + JSON.stringify(neighbor1));
         console.log("Neighbor2:" + JSON.stringify(neighbor2));
 
-        // First (easy check) - Is either road edge intersect neighbor occuppied by same player?
+        // First (easy check) - Is either road-edge intersect-neighbor occuppied by same player?
         if (neighbor1.isOccupiedByPlayer(playerProxy.id) || neighbor2.isOccupiedByPlayer(playerProxy.id)) {
             return true;
         }
@@ -447,7 +503,7 @@ app.GameBoardController = (function() {
         Check all immediate neighbor intersections (note: this includes selected intersectionId)
         If any settlement is found, then return false
     */
-    function isSettlementTwoAway(x,y, intersectId) {
+    function isSettlementTwoAway(intersectId) {
 
         var neighborInfo = app.intersectToIntersectAdjacency[intersectId];
         console.log("Neighbor ids: " + neighborInfo);
@@ -469,15 +525,19 @@ app.GameBoardController = (function() {
         return true;
     }
 
-    function isSettlementContiguousForPlayer(playerProxy, x, y, intersectId) {
+    function isSettlementContiguousForPlayer(playerProxy, intersectId) {
 
+        // Intersection must have neighboring owned roads (i.e. neighboring center points occupied with road owned by same player)
         app.intersectToIntersectAdjacency[intersectId];
 
-        return true;
-    }
+        // Neighboring center points where
+        var neighborCenterPoints = app.roadCenterPoints
+            .filter(x => x.attrs.intersectionIds.some(y => y === intersectId));
 
-    function isIntersectionOccupied(x, y) {
-        return false;
+        return neighborCenterPoints.some(x =>
+            x.attrs.occupyingPiece === true &&
+            x.attrs.occupyingPiece.type &&
+            x.attrs.occupyingPiece.type === 'road');
     }
 
     function isRoadOccupied(roadSeg) {
