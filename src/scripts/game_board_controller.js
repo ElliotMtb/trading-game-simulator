@@ -286,7 +286,31 @@ app.GameBoardController = (function() {
         // starting at length 4...because then can simply use the same algoritm for
         // taking the longest road, i.e. player may claim longest road if obtains 1 longer than current longest
        
-        app.Paths.GetPathFinder().findPlayerPaths(playerProxy);
+        var paths = app.Paths.GetPathFinder().findPlayerPaths(playerProxy);
+
+        console.log("Paths: " + JSON.stringify(paths));
+        
+        var longestPath = paths.reduce(
+            (accumulator, currentVal) =>  {
+
+                if (currentVal.length > accumulator[0]) {
+                    return [
+                        currentVal.length,
+                        currentVal
+                    ]
+                }
+                return [
+                    accumulator[0],
+                    accumulator[1]
+                ]
+            }, [0, []]
+        );
+
+        console.log("Longest path: " + JSON.stringify(longestPath));
+
+        var startingRoadNodes = app.Proxies.RoadManager().getRoadProxy(longestPath[1][0]).intersectionIds;
+        var endingRoadNodes = app.Proxies.RoadManager().getRoadProxy(longestPath[1][longestPath[1].length - 1]).intersectionIds;
+        console.log("LONGEST PATH FOUND - length: " + longestPath[0] + " starting: " + startingRoadNodes.toString() + " ending: " + endingRoadNodes.toString());
     }
 
     function checkForVictory(playerProxy) {

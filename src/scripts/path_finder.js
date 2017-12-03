@@ -17,6 +17,8 @@ app.Paths = (function() {
         */
         function findPlayerPaths(playerProxy) {
 
+            var pathsFound = []
+
             var playerRoadProxies = app.Proxies.RoadManager().getPlayerRoadProxies(playerProxy.id);
 
             var i;
@@ -31,29 +33,41 @@ app.Paths = (function() {
                 console.log("All aft-side neighbors: " + road.allAftSideNeighbors.toString());
 
                 var initForwardPath = [road.id];
-                beginRecurse(road.foreFacingNeighbors, road.foreSideId, initForwardPath, playerProxy);
+                var forwardsPaths = beginRecurse(road.foreFacingNeighbors, road.foreSideId, initForwardPath, playerProxy);
+                console.log("forward paths: " + JSON.stringify(forwardsPaths));
 
                 var initReversePath = [road.id];
-                beginRecurse(road.aftFacingNeighbors, road.aftSideId, initReversePath, playerProxy);
+                var reversePaths = beginRecurse(road.aftFacingNeighbors, road.aftSideId, initReversePath, playerProxy);
+                console.log("reverse paths: " + JSON.stringify(reversePaths));
+
+                forwardsPaths.map(x => pathsFound.push(x));
+                reversePaths.map(x => pathsFound.push(x));
             }
+
+            return pathsFound;
         }
 
         function beginRecurse(nextNodeIds, startingNodeId, roadIdChain, playerProxy) {
 
-            var result;
+            var paths = [];
             var i;
 
             console.log("Next nodes to search: " + JSON.stringify(nextNodeIds));
 
             for (i = 0; i < nextNodeIds.length; i++) {
 
-                result = recursiveRoadSearch(nextNodeIds[i], startingNodeId, roadIdChain.slice(), playerProxy);
-                
+                var result = recursiveRoadSearch(nextNodeIds[i], startingNodeId, roadIdChain.slice(), playerProxy);
+
                 var startingRoadNodes = app.Proxies.RoadManager().getRoadProxy(result[0]).intersectionIds;
                 var endingRoadNodes = app.Proxies.RoadManager().getRoadProxy(result[result.length - 1]).intersectionIds;
                 console.log("FOUND ROAD PATH length: " + result.length + " starting: " + startingRoadNodes.toString() + " ending: " + endingRoadNodes.toString());
-                //console.log("Contents: " + JSON.stringify(result));
+
+                paths.push(result);
             }
+
+            console.log("Paths: " + JSON.stringify(paths));
+
+            return paths;
         }
 
         function recursiveRoadSearch(nextNodeId, previousIntersectNodeId, roadChain, playerProxy) {
