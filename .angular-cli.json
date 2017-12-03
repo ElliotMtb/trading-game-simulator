@@ -46,7 +46,8 @@
           "scripts/hex_builder.js",
           "scripts/intersection_builder.js",
           "scripts/game_board_builder.js",
-          "scripts/mainview_initializer.js"
+          "scripts/mainview_initializer.js",
+          "scripts/path_finder.js"
         ],
       "environmentSource": "environments/environment.ts",
       "environments": {
