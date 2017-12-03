@@ -138,9 +138,13 @@ app.GameBoardController = (function() {
             
             var playerProxy = app.gamePlayMachine.GetCurrentPlayer();
 
-            console.log("SELECTED ROAD :" + JSON.stringify([this].map(x => keyRoadData(x))));
+            var roadProxy = app.Proxies.GetRoadProxy(this);
 
-            if (isRoadPlaceable(playerProxy, "road", this.attrs.intersectionIds[0], this.attrs.intersectionIds[1], this.attrs.occupyingPiece)) {
+            console.log("foresideid: " + roadProxy.foreSideId + " aftsideId: " + roadProxy.aftSideId);
+
+            console.log("SELECTED ROAD :" + JSON.stringify(roadProxy.keyRoadData));
+
+            if (isRoadPlaceable(playerProxy, "road", roadProxy.foreSideId, roadProxy.aftSideId, roadProxy)) {
 
                 // TODO: make a "place road" button and bind it here (like for city and settlement)
                 // road.on("click", function() {})
@@ -153,14 +157,18 @@ app.GameBoardController = (function() {
                 }
 
                 playerProxy.deployUnit("road");
-
-                installRoadPlaceholder(playerProxy.id, "road", this.attrs.id);
+                
+                installRoadPlaceholder(playerProxy.id, "road", roadProxy.id);
 
                 // TODO: Use "global" road length
                 var road = piecesBuilder.MakeRoad(this.attrs.roadX, this.attrs.roadY, 20, playerProxy["color"], this.attrs.angle);
                 
                 app.kineticLayer.add(road);
                 app.kineticLayer.draw();
+
+                tryClaimLongestRoad(playerProxy);
+                
+                checkForVictory(playerProxy);
 
                 var updatedPlayerInfo = app.gamePlayMachine.GetCurrentPlayer();
                 console.log("Current player stats after road placement: " + JSON.stringify(updatedPlayerInfo));
@@ -219,6 +227,10 @@ app.GameBoardController = (function() {
 
                     playerProxy.deployUnit("settlement");
                     
+                    playerProxy.addPoints(1);
+
+                    checkForVictory(playerProxy);
+
                     installIntersectionPlaceholder(playerProxy.id, "settlement", intersectId);
 
                     piecesBuilder.MakeSettlement(intersectX, intersectY, 10, itemDrawColor, app.kineticLayer);
@@ -245,6 +257,10 @@ app.GameBoardController = (function() {
 
                     playerProxy.deployUnit("city");
                     
+                    playerProxy.addPoints(1);
+
+                    checkForVictory(playerProxy);
+
                     installIntersectionPlaceholder(playerProxy.id, "city", intersectId);
 
                     piecesBuilder.MakeCity(intersectX, intersectY, 10, itemDrawColor, app.kineticLayer);
@@ -260,6 +276,124 @@ app.GameBoardController = (function() {
         
         });
     };
+
+    function tryClaimLongestRoad(playerProxy) {
+
+        // TODO: Compare player's longest road vs. current game's longest road
+        
+        // (keep a running 'longest road' token...initially owned by player 'none' and
+        
+        // starting at length 4...because then can simply use the same algoritm for
+        // taking the longest road, i.e. player may claim longest road if obtains 1 longer than current longest
+        //      How to calculate longest road:
+        //          For each road segment belonging to a player
+        //              Search all contiguous paths to find the maximum-length path
+        //                  i.e. depth-first graph traversal using current road segment as "root" (or use each neighbor intersect as separate roots of 2 depth-first searches),
+        //                  use neighbor-intersections as children (whose respective children are its adjacent intersections (excluding the opposite neighbor of the roor neighbor)
+        //                  ,roads adjacent to neighbor-intersection
+        //                  "bottom" of search is reached when
+        //                      1. Next child road segment is not occupied
+        //                      2. Next child road segment is already part of the same depth-first chain
+
+        var playerRoadProxies = app.Proxies.RoadManager().getPlayerRoadProxies(playerProxy.id);
+
+        var i;
+        for (i = 0; i < playerRoadProxies.length; i++) {
+            
+            var road = playerRoadProxies[i];
+
+            console.log("Fore-facing neighber nodes: " + road.foreFacingNeighbors.toString());
+            console.log("All fore-side neighbors: " + road.allForeSideNeighbors.toString());
+
+            console.log("Aft-facing neighbor nodes: " + road.aftFacingNeighbors.toString());
+            console.log("All aft-side neighbors: " + road.allAftSideNeighbors.toString());
+
+            var initForwardPath = [road.id];
+            beginRecurse(road.foreFacingNeighbors, road.foreSideId, initForwardPath, playerProxy);
+
+            var initReversePath = [road.id];
+            beginRecurse(road.aftFacingNeighbors, road.aftSideId, initReversePath, playerProxy);
+        }
+
+    }
+
+    function beginRecurse(nextNodeIds, startingNodeId, roadIdChain, playerProxy) {
+
+        var result;
+        var i;
+
+        console.log("Next nodes to search: " + JSON.stringify(nextNodeIds));
+
+        for (i = 0; i < nextNodeIds.length; i++) {
+
+            result = recursiveRoadSearch(nextNodeIds[i], startingNodeId, roadIdChain.slice(), playerProxy);
+            
+            var startingRoadNodes = app.Proxies.RoadManager().getRoadProxy(result[0]).intersectionIds;
+            var endingRoadNodes = app.Proxies.RoadManager().getRoadProxy(result[result.length - 1]).intersectionIds;
+            console.log("FOUND ROAD PATH length: " + result.length + " starting: " + startingRoadNodes.toString() + " ending: " + endingRoadNodes.toString());
+            //console.log("Contents: " + JSON.stringify(result));
+        }
+    }
+
+    function recursiveRoadSearch(nextNodeId, previousIntersectNodeId, roadChain, playerProxy) {
+
+        var roadProxy = app.Proxies.RoadManager().getRoadProxyBetweenSideNodes(nextNodeId, previousIntersectNodeId);
+
+        console.log("Checking nextId: " + nextNodeId + " prevId: " + previousIntersectNodeId);
+        
+        // TODO: Also end chain if "prev" node is occupied by an opponent (cutting off the road chain)
+        // ...and actually placement of a settlement is cause to tryClaimLongestRoad (in which case all players'
+        // longest road might need to be taken into account)
+        if (!roadProxy.isRoadOccupied() ||
+            !roadProxy.isRoadOccupiedByPlayer(playerProxy.id) ||
+            roadChain.filter(x => x === roadProxy.id).length > 0){
+            return roadChain;
+        }
+            
+        roadChain.push(roadProxy.id);
+
+        var forwardAdjacentIntersects = roadProxy.getNeighborsFacing(nextNodeId);
+
+        //console.log("number of forward paths: " + forwardAdjacentIntersects.length);
+
+        var newPrevNodeId = nextNodeId;
+        var subPaths = [];
+        var z;
+        for (z = 0; z < forwardAdjacentIntersects.length; z++) {
+
+            var newNextNodeId = forwardAdjacentIntersects[z];
+
+            var returnedChain = recursiveRoadSearch(newNextNodeId, newPrevNodeId, roadChain.slice(), playerProxy);
+
+            subPaths.push(returnedChain);
+        }
+
+        return getLongestSubPath(subPaths);
+    }
+
+    function getLongestSubPath(subPaths) {
+
+        if (subPaths.length === 1) {
+
+                return subPaths[0];
+        }
+        else if (subPaths.length === 2) {
+
+            if (subPaths[0].length > subPaths[1].length) {
+                return subPaths[0];
+            }
+
+            return subPaths [1];
+        }
+        else {
+
+            throw "Unexpected number of sub paths";
+        }
+    }
+
+    function checkForVictory(playerProxy) {
+
+    }
 
     function installRoadPlaceholder(playerId, unitType, centerId) {
         
@@ -338,14 +472,14 @@ app.GameBoardController = (function() {
 
     }
 
-    function isRoadPlaceable(playerProxy, unitType, neighborIntersect1, neighborIntersect2, occupyingPiece) {
+    function isRoadPlaceable(playerProxy, unitType, neighborIntersect1, neighborIntersect2, roadProxy) {
 
         if (app.gamePlayMachine.currentGamePhase.data.name === "gameplay") {
             if (!canAffordPurchase(playerProxy, unitType))
                 return false;
         }
 
-        if (isRoadOccupied(occupyingPiece))
+        if (roadProxy.isRoadOccupied())
             return false;
 
         if (!isRoadContiguousForPlayer(playerProxy, neighborIntersect1, neighborIntersect2)) {
@@ -446,41 +580,20 @@ app.GameBoardController = (function() {
 
                 if (neighborAdjList[i] !== roadNeighborIntersectId) {
 
-                    // where 'intersectionIds' contains BOTH current intersectionId AND neighbor id of interest
-                    function whereContainsBothIds(road) {
-                        
-                        // console.log("Road: " + JSON.stringify(road.attrs));
-                        // console.log("Road attrs intersect ids: " + road.attrs.intersectionIds[0]);
+                    roadProxy = app.Proxies.RoadManager().getRoadProxyBetweenSideNodes(roadNeighborIntersectId, neighborAdjList[i]);
 
-                        if (road.attrs.intersectionIds.indexOf(roadNeighborIntersectId) > -1 &&
-                            road.attrs.intersectionIds.indexOf(neighborAdjList[i]) > -1) {
-                            return true;
-                        }
+                    console.log("Road segment: " + JSON.stringify(roadProxy.keyRoadData));
 
-                        return false;
-                    }
-
-                    //console.log("Roads on board: " + JSON.stringify(app.roadCenterPoints));
-
-                    var roadSegment = app.roadCenterPoints.filter(whereContainsBothIds);
-                    console.log("Road segment: " + JSON.stringify(roadSegment.map(x => keyRoadData(x))));
-
-                    adjacentRoadSegments = adjacentRoadSegments.concat(roadSegment);
+                    adjacentRoadSegments.push(roadProxy);
 
                 }
             }
 
-            console.log("Adjacent road segments: " + JSON.stringify(adjacentRoadSegments.map(x => keyRoadData(x))));
+            console.log("Adjacent road segments: " + JSON.stringify(adjacentRoadSegments.map(x => x.keyRoadData)));
 
-            var any = adjacentRoadSegments.filter(function (seg) {
-                if (seg.attrs.occupyingPiece &&
-                    seg.attrs.occupyingPiece.playerId === currentPlayerId) {
-                    
-                    return true;
-                }
-            });
+            var any = adjacentRoadSegments.filter(x => x.isRoadOccupiedByPlayer(currentPlayerId));
 
-            console.log("Friendly roads adjacent to neighbor intersect?: " + JSON.stringify(any.map(x => keyRoadData(x))));
+            console.log("Friendly roads adjacent to neighbor intersect?: " + JSON.stringify(any.map(x => x.keyRoadData)));
 
             if (any.length >= 1) {
                 return true;
@@ -490,13 +603,6 @@ app.GameBoardController = (function() {
         }
 
         return false;
-    }
-
-    function keyRoadData(roadSeg) {
-        return {
-            'intersectionIds': roadSeg.attrs.intersectionIds,
-            'occupyingPiece': roadSeg.attrs.occupyingPiece
-        };
     }
 
     /*
@@ -531,21 +637,9 @@ app.GameBoardController = (function() {
         app.intersectToIntersectAdjacency[intersectId];
 
         // Neighboring center points where
-        var neighborCenterPoints = app.roadCenterPoints
-            .filter(x => x.attrs.intersectionIds.some(y => y === intersectId));
+        var neighborRoadProxies = app.Proxies.RoadManager().getNeighboringRoadProxies(intersectId);
 
-        return neighborCenterPoints.some(x =>
-            x.attrs.occupyingPiece === true &&
-            x.attrs.occupyingPiece.type &&
-            x.attrs.occupyingPiece.type === 'road');
-    }
-
-    function isRoadOccupied(roadSeg) {
-
-        if (roadSeg && roadSeg.type) {
-            return true;
-        }
-        return false;
+        return neighborRoadProxies.some(x => x.isRoadOccupied() && x.isRoadOccupiedByPlayer(playerProxy.id));
     }
 
     function Controller_OnStartGame() {
@@ -601,6 +695,14 @@ app.GameBoardController = (function() {
             deployUnit: function(type) {
 
                 playerModel.deployPurchase(type);
+            },
+            addPoints: function(numPoints) {
+
+                var i;
+                for (i = 0; i < numPoints; i++) {
+                    playerModel.addPoint();
+                }
+
             },
             spend: function(type, quantity) {
                 

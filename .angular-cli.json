@@ -35,6 +35,7 @@
           "scripts/board_data.js",
           "scripts/models/player_model.js",
           "scripts/models/intersection_model.js",
+          "scripts/models/proxies.js",
           "scripts/views/intersection_view.js",
           "scripts/views/player_view.js",
           "scripts/views/setup_view.js",

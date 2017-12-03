@@ -1,7 +1,7 @@
 app.Player = Backbone.Model.extend({
     defaults: {
         name: '',
-        point: 2,
+        point: 0,
         resources: {'brick':0, 'wheat':0, 'rock':0, 'wood':0, 'sheep':0},
         color: 'red',
         purchasedItems: {'road': 0, 'settlement': 0, 'city': 0, 'developmentCard': 0}
@@ -34,7 +34,7 @@ app.Player = Backbone.Model.extend({
 
         if (isValidType === false)
             throw "Error. Invalid resource type sepcified for player to spend";
-        
+
         if (currentAmt - quantity < 0)
             throw "Error. Player has insufficient resources.";
 
