@@ -138,11 +138,17 @@ app.GamePlay = (function() {
         this.currentTurnPhase = null;
         this.currentTurnPlayer = null;
         
+        // Initial length 4 so that players need 5 to claim
+        var longestRoad = { 
+            'length': 4,
+            'playerId': ''
+        };
+
         var currentDieRoll = 0;
 
         this.getCurrentDieRoll = function () {
             return currentDieRoll;
-        }
+        };
 
         this.setCurrentDieRoll = function(number) {
 
@@ -150,7 +156,26 @@ app.GamePlay = (function() {
                 throw "Error. Current die roll must be set to an integer between 2 and 12";
 
             currentDieRoll = number
-        }
+        };
+
+        this.getLongestRoadHolder = function() {
+            return {
+                'length': longestRoad.length,
+                'playerId': longestRoad.playerId
+            };
+        };
+
+        this.tryClaimLongestRoad = function(playerProxy, playerRoadLength) {
+            
+            if (playerRoadLength > longestRoad.length) {
+                longestRoad.length = playerRoadLength;
+                longestRoad.playerId = playerProxy.id
+
+                return true;
+            }
+
+            return false;
+        };
     }
 
     /*

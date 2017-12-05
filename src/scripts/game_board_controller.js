@@ -166,7 +166,34 @@ app.GameBoardController = (function() {
                 app.kineticLayer.add(road);
                 app.kineticLayer.draw();
 
-                tryClaimLongestRoad(playerProxy);
+                // Check for longest road
+                var pathLength = getPlayerLongestRoad(playerProxy);
+
+                var prevLongestRoadHolder = app.gamePlayMachine.getLongestRoadHolder();
+
+                // Update claim on longest road (increment and/or change hands)
+                if (app.gamePlayMachine.tryClaimLongestRoad(playerProxy, pathLength)) {
+
+                    console.log("Longest road claim successful. New length: " + pathLength);
+                    console.log("prevlongestRoadHolderId: " + prevLongestRoadHolder.playerId + " playerProxy.id: " + playerProxy.id + " prevLongHolder: " + JSON.stringify(prevLongestRoadHolder));
+
+                    
+                    // If changed hands...
+                    if (prevLongestRoadHolder.playerId !== playerProxy.id || prevLongestRoadHolder.playerId === '') {
+
+                        console.log("Longest road changed hands");
+                        playerProxy.addPoints(2);
+
+                        if (prevLongestRoadHolder.playerId !== '') {
+
+                            var loserProxy = GetPlayerProxyById(prevLongestRoadHolder.playerId);
+                            loserProxy.addPoints(-2);
+                        }
+                        
+
+                        console.log("Longest road points awarded");
+                    }
+                }
                 
                 checkForVictory(playerProxy);
 
@@ -277,15 +304,8 @@ app.GameBoardController = (function() {
         });
     };
 
-    function tryClaimLongestRoad(playerProxy) {
+    function getPlayerLongestRoad(playerProxy) {
 
-        // TODO: Compare player's longest road vs. current game's longest road
-        
-        // (keep a running 'longest road' token...initially owned by player 'none' and
-        
-        // starting at length 4...because then can simply use the same algoritm for
-        // taking the longest road, i.e. player may claim longest road if obtains 1 longer than current longest
-       
         var paths = app.Paths.GetPathFinder().findPlayerPaths(playerProxy);
 
         console.log("Paths: " + JSON.stringify(paths));
@@ -311,10 +331,15 @@ app.GameBoardController = (function() {
         var startingRoadNodes = app.Proxies.RoadManager().getRoadProxy(longestPath[1][0]).intersectionIds;
         var endingRoadNodes = app.Proxies.RoadManager().getRoadProxy(longestPath[1][longestPath[1].length - 1]).intersectionIds;
         console.log("LONGEST PATH FOUND - length: " + longestPath[0] + " starting: " + startingRoadNodes.toString() + " ending: " + endingRoadNodes.toString());
+
+        return longestPath[0];
     }
 
     function checkForVictory(playerProxy) {
 
+        if (playerProxy.points >= 13) {
+            alert("Player wins! name: " + playerProxy.name + " points: " + playerProxy.points);
+        }
     }
 
     function installRoadPlaceholder(playerId, unitType, centerId) {
@@ -347,7 +372,7 @@ app.GameBoardController = (function() {
 
             app.gamePlayMachine.Start();
             
-            var playerProxy = GetPlayerProxy(app.gamePlayMachine.currentTurnPlayer.data);
+            var playerProxy = app.gamePlayMachine.GetCurrentPlayer();
 
             app.controlPanelController.OnActivePlayerChange(playerProxy);
         }
@@ -362,7 +387,7 @@ app.GameBoardController = (function() {
 
     Controller.prototype.OnStartGame				= Controller_OnStartGame;
 
-    /*
+     /*
         Public Static-esque function (i.e. not on the main "Controller" object in this module,
         but in the list of "publically" returned/exposed functions)
 
@@ -375,15 +400,20 @@ app.GameBoardController = (function() {
         console.log(player);
         console.log(app.playerList);
 
-        var playerModel = app.playerList.get(player.get("id"));
+        return GetPlayerProxyById(player.get("id"));
+    }
+
+    function GetPlayerProxyById(playerId) {
+
+        var playerModel = app.playerList.get(playerId);
 
         return {
-            id: player.get("id"),
-            name: player.get("name"),
-            color: player.get("color"),
-            points: player.get("point"),
-            purchasedItems: player.get("purchasedItems"),
-            resources: player.get("resources"),
+            id: playerModel.get("id"),
+            name: playerModel.get("name"),
+            color: playerModel.get("color"),
+            points: playerModel.get("point"),
+            purchasedItems: playerModel.get("purchasedItems"),
+            resources: playerModel.get("resources"),
             deployUnit: function(type) {
 
                 playerModel.deployPurchase(type);
@@ -416,6 +446,7 @@ app.GameBoardController = (function() {
                 }
             }
         };
+
     }
 
     function toggleVisibilityForArray(items) {
