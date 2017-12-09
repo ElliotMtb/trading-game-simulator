@@ -130,9 +130,73 @@ app.Proxies = (function() {
         };
     }
 
+         /*
+        Public Static-esque function (i.e. not on the main "Controller" object in this module,
+        but in the list of "publically" returned/exposed functions)
+
+        Currently using Backbone Models, but I imagine I'll want to factor out backbone in the
+        future in favor of moving towards Angular (most likely). As such, I want to decouple
+        from the actual Backbone model where possible
+    */
+    function GetPlayerProxy(player) {
+
+        console.log(player);
+        console.log(app.playerList);
+
+        return GetPlayerProxyById(player.get("id"));
+    }
+
+    function GetPlayerProxyById(playerId) {
+
+        var playerModel = app.playerList.get(playerId);
+
+        return {
+            id: playerModel.get("id"),
+            name: playerModel.get("name"),
+            color: playerModel.get("color"),
+            points: playerModel.get("point"),
+            purchasedItems: playerModel.get("purchasedItems"),
+            resources: playerModel.get("resources"),
+            deployUnit: function(type) {
+
+                playerModel.deployPurchase(type);
+            },
+            addPoints: function(numPoints) {
+
+                var i;
+                for (i = 0; i < numPoints; i++) {
+                    playerModel.addPoint();
+                }
+
+            },
+            spend: function(type, quantity) {
+                
+                playerModel.spend(type, quantity);
+            },
+            addPurchase: function(type) {
+
+                playerModel.addPurchase(type);
+            },
+            addResource: function(type) {
+
+                playerModel.addResource(type);
+            },
+            addMultipleResources: function(type, qty) {
+
+                var i;
+                for (i = 0; i < qty; i++) {
+                    playerModel.addResource(type);
+                }
+            }
+        };
+
+    }
+
     return {
         GetRoadProxy: GetRoadProxy,
-        RoadManager: RoadManager
+        RoadManager: RoadManager,
+        GetPlayerProxy: GetPlayerProxy,
+        GetPlayerProxyById: GetPlayerProxyById
     };
 
 })();

@@ -84,7 +84,7 @@ app.GamePlay = (function() {
 
         app.playerList.models.map(function(player) {
 
-            var playerProxy = app.GameBoardController.GetPlayerProxy(player);
+            var playerProxy = app.Proxies.GetPlayerProxy(player);
 
             unitsForSinglePlacementRound.push("settlement", "road", "settlement", "road");
 
@@ -184,7 +184,7 @@ app.GamePlay = (function() {
     */
     function GamePlayMachine_GetCurrentPlayer() {
 
-        return app.GameBoardController.GetPlayerProxy(this.currentTurnPlayer.data);
+        return app.Proxies.GetPlayerProxy(this.currentTurnPlayer.data);
     }
 
     function GamePlayMachine_Start() {
@@ -339,10 +339,7 @@ app.GamePlay = (function() {
         console.log("Occupied intersection " + i + " :" + JSON.stringify(piece));
 
         // Lookup occupying piece owner (player)
-        // TODO: probably don't want to use the global playerlist...should put this in
-        // its own function
-        playerProxy = app.GameBoardController.GetPlayerProxy(app.playerList.get(piece.playerId));
-
+        playerProxy = app.Proxies.GetPlayerProxyById(piece.playerId);
         
         // Apply disbursement
         if (piece.type === 'city') {
