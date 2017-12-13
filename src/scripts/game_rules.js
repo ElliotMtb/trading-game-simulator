@@ -64,7 +64,7 @@ app.Rules = (function() {
 
         }
 
-        function isRoadPlaceable(playerProxy, unitType, neighborIntersect1, neighborIntersect2, roadProxy) {
+        function isRoadPlaceable(playerProxy, unitType, roadProxy) {
 
             if (app.gamePlayMachine.currentGamePhase.data.name === "gameplay") {
                 if (!canAffordPurchase(playerProxy, unitType))
@@ -74,7 +74,7 @@ app.Rules = (function() {
             if (roadProxy.isRoadOccupied())
                 return false;
 
-            if (!isRoadContiguousForPlayer(playerProxy, neighborIntersect1, neighborIntersect2)) {
+            if (!isRoadContiguousForPlayer(playerProxy, roadProxy)) {
                 return false;
             }
 
@@ -115,20 +115,20 @@ app.Rules = (function() {
             1. Immediately neighboring intersection is occupied by the same player
             2. Immediately neighboring road segment (edge) is occupied by the same player
         */
-        function isRoadContiguousForPlayer(playerProxy, neighborIntersect1, neighborIntersect2) {
+        function isRoadContiguousForPlayer(playerProxy, roadProxy) {
 
             // Neighboring road edges can be found as the midpoint between both neighboring intersections
             // (on either side of selected road edge) and their respective neighbors
 
-            var neighbor1 = app.hexIntersectList.get(neighborIntersect1)
-            var neighbor2 = app.hexIntersectList.get(neighborIntersect2)
+            var foreSideNeighbor = app.hexIntersectList.get(roadProxy.foreSideId)
+            var aftSideNeighbor = app.hexIntersectList.get(roadProxy.aftSideId)
 
-            console.log("Neighbor intersects to check: " + neighborIntersect1 + "," + neighborIntersect2);
-            console.log("Neighbor1: " + JSON.stringify(neighbor1));
-            console.log("Neighbor2:" + JSON.stringify(neighbor2));
+            console.log("Neighbor intersects to check: " + roadProxy.foreSideId + "," + roadProxy.aftSideId);
+            console.log("Fore-side neighbor: " + JSON.stringify(foreSideNeighbor));
+            console.log("Aft-side neighbor:" + JSON.stringify(aftSideNeighbor));
 
             // First (easy check) - Is either road-edge intersect-neighbor occuppied by same player?
-            if (neighbor1.isOccupiedByPlayer(playerProxy.id) || neighbor2.isOccupiedByPlayer(playerProxy.id)) {
+            if (foreSideNeighbor.isOccupiedByPlayer(playerProxy.id) || aftSideNeighbor.isOccupiedByPlayer(playerProxy.id)) {
                 return true;
             }
             
@@ -140,27 +140,30 @@ app.Rules = (function() {
             //      Amongst all fetched road segments, if 1 or more is occupied by the player, then return true
 
             // Check neighbor 1
-            if (neighbor1.isOccupied() === false) {
+            if (foreSideNeighbor.isOccupied() === false) {
 
                 console.log("Neighbor 1 not occupied");
 
-                if (playerOwnsRoadAdjacentToNeighborIntersection(neighborIntersect1, playerProxy.id)) {
+                if (playerOwnsRoadAdjacentToNeighborIntersection(roadProxy.foreSideId, playerProxy.id)) {
                     return true;
                 }
             }
 
             // Check neighbor 2
-            if (neighbor2.isOccupied() === false) {
+            if (aftSideNeighbor.isOccupied() === false) {
 
                 console.log("Neighbor 2 not occupied");
 
-                if (playerOwnsRoadAdjacentToNeighborIntersection(neighborIntersect2, playerProxy.id)) {
+                if (playerOwnsRoadAdjacentToNeighborIntersection(roadProxy.aftSideId, playerProxy.id)) {
                     return true;
                 }
             }
 
             function playerOwnsRoadAdjacentToNeighborIntersection(roadNeighborIntersectId, currentPlayerId) {
 
+                var roadProxy;
+
+                console.log("NeighborIntId: " + roadNeighborIntersectId)
                 var neighborAdjList = app.intersectToIntersectAdjacency[roadNeighborIntersectId];
 
                 console.log("Neighbor adjacency list: " + neighborAdjList);
@@ -177,7 +180,6 @@ app.Rules = (function() {
                         console.log("Road segment: " + JSON.stringify(roadProxy.keyRoadData));
 
                         adjacentRoadSegments.push(roadProxy);
-
                     }
                 }
 

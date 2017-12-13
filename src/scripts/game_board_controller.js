@@ -140,11 +140,11 @@ app.GameBoardController = (function() {
 
             var roadProxy = app.Proxies.GetRoadProxy(this);
 
-            console.log("foresideid: " + roadProxy.foreSideId + " aftsideId: " + roadProxy.aftSideId);
+            console.log("roadCenterId: " + roadProxy.id + " foresideid: " + roadProxy.foreSideId + " aftsideId: " + roadProxy.aftSideId);
 
             console.log("SELECTED ROAD :" + JSON.stringify(roadProxy.keyRoadData));
 
-            if (app.Rules.GetValidator().isRoadPlaceable(playerProxy, "road", roadProxy.foreSideId, roadProxy.aftSideId, roadProxy)) {
+            if (app.Rules.GetValidator().isRoadPlaceable(playerProxy, "road", roadProxy)) {
 
                 // TODO: make a "place road" button and bind it here (like for city and settlement)
                 // road.on("click", function() {})
@@ -375,6 +375,9 @@ app.GameBoardController = (function() {
             var playerProxy = app.gamePlayMachine.GetCurrentPlayer();
 
             app.controlPanelController.OnActivePlayerChange(playerProxy);
+
+            aIsetup(this, playerProxy);
+
         }
     }
 
@@ -386,6 +389,69 @@ app.GameBoardController = (function() {
     Controller.prototype.BindIntersectClick			= Controller_BindIntersectClick;
 
     Controller.prototype.OnStartGame				= Controller_OnStartGame;
+
+    function aIsetup(boardController, playerProxy) {
+
+        // Must turn on select mode!!!
+        // TODO: have the AI check the state of the mode and set as appropriate
+        boardController.ToggleIntersectSelectMode();
+        boardController.ToggleRoadSelectMode();
+
+        // Auto turn 1
+        // Current player place settlement at intersection id 0
+        aIPlaceSettlement(playerProxy);
+        $("#endTurn").trigger("click");
+
+        // Auto turn 2
+        playerProxy = app.gamePlayMachine.GetCurrentPlayer();
+        aIPlaceSettlement(playerProxy);
+        $("#endTurn").trigger("click");
+        
+        // Auto turn 3
+        playerProxy = app.gamePlayMachine.GetCurrentPlayer();
+        aIPlaceSettlement(playerProxy);
+        $("#endTurn").trigger("click");
+        
+        // Auto turn 4
+        playerProxy = app.gamePlayMachine.GetCurrentPlayer();
+        aIPlaceSettlement(playerProxy);
+
+        app.gamePlayMachine.NextGamePhase();
+        
+        boardController.ToggleIntersectSelectMode();
+        boardController.ToggleRoadSelectMode();
+    }
+
+    function aIPlaceSettlement(playerProxy) {
+
+        // get all unoccupied nodes that are 2-away (eligible/free)
+        //var unoccupied = app.hexIntersectList.filter(x => !x.isOccupied())
+        var intersectIds = app.hexIntersectList.map(x => x.get('id'));
+        var evaluator = app.Rules.GetValidator();
+
+        var eligible = intersectIds.filter(x => evaluator.isIntersectPlaceable(playerProxy, 'settlement', x));
+        var randEligIndex = Math.round(Math.random()*eligible.length) - 1;
+        var randIntId = eligible[randEligIndex];
+
+        // Found a way to trigger Kinetic object event with 'fire'
+        // https://stackoverflow.com/questions/11819556/using-kineticjs-is-a-way-of-trigger-events-like-jquery
+        app.vertices[randIntId].fire("click");
+
+        $(".settlement-btn").trigger("click");
+
+        var allRoadProxies = app.Proxies.RoadManager().getAllRoadProxies();
+        var placeableRoads = allRoadProxies.filter(x => evaluator.isRoadPlaceable(playerProxy, "road", x));
+
+        //var neighborRoads = app.Proxies.RoadManager().getNeighboringRoadProxies(randIntId);
+        var randomIndex = Math.round(Math.random()*(placeableRoads.length - 1));
+
+        console.log("randIntId: " + randIntId);
+        console.log("num neighbor roads: " + placeableRoads.length);
+        console.log("randomIndex to choose neighbor road: " + randomIndex);
+
+        var randRoadId = placeableRoads[randomIndex].id;
+        app.roadCenterPoints[randRoadId].fire("click");
+    }
 
     function toggleVisibilityForArray(items) {
                     

@@ -41,6 +41,9 @@ app.Proxies = (function() {
                 return getAllRoads()
                     .map(x => GetRoadProxy(x))
                     .filter(x => x.isRoadOccupiedByPlayer(playerId));
+            },
+            getAllRoadProxies: function() {
+                return getAllRoads().map(x => GetRoadProxy(x));
             }
         };
     }
