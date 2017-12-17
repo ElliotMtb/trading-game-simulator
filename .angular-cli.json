@@ -39,6 +39,7 @@
           "scripts/views/intersection_view.js",
           "scripts/views/player_view.js",
           "scripts/views/setup_view.js",
+          "scripts/rudi_ai.js",
           "scripts/router.js",
           "scripts/pieces-builder.js",
           "scripts/game_board_controller.js",
