@@ -338,7 +338,7 @@ app.GameBoardController = (function() {
     function checkForVictory(playerProxy) {
 
         if (playerProxy.points >= 13) {
-            alert("Player wins! name: " + playerProxy.name + " points: " + playerProxy.points);
+            throw "Player wins! name: " + playerProxy.name + " points: " + playerProxy.points;
         }
     }
 
@@ -376,7 +376,15 @@ app.GameBoardController = (function() {
 
             app.controlPanelController.OnActivePlayerChange(playerProxy);
 
-            aIsetup(this, playerProxy);
+            // AI play
+            var numPlayers = app.playerList.length;
+
+            aIsetup(numPlayers);
+
+            app.gamePlayMachine.NextGamePhase();
+
+            // Play x number of turns or until someone wins
+            aIPlayGame(200);
 
         }
     }
@@ -390,38 +398,124 @@ app.GameBoardController = (function() {
 
     Controller.prototype.OnStartGame				= Controller_OnStartGame;
 
-    function aIsetup(boardController, playerProxy) {
+    function aIsetup(numPlayers) {
 
-        // Must turn on select mode!!!
-        // TODO: have the AI check the state of the mode and set as appropriate
-        boardController.ToggleIntersectSelectMode();
-        boardController.ToggleRoadSelectMode();
+        var playerProxy;
 
-        // Auto turn 1
-        // Current player place settlement at intersection id 0
-        aIPlaceSettlement(playerProxy);
-        $("#endTurn").trigger("click");
+        var i;
+        for (i = 0; i < (numPlayers * 2) - 1; i++) {
 
-        // Auto turn 2
+            playerProxy = app.gamePlayMachine.GetCurrentPlayer();
+            aIPlaceSettlement(playerProxy);
+            aIPlaceRoad(playerProxy);
+            $("#endTurn").trigger("click");
+        }
+
+        // last time not calling end turn, because next game phase will take care of it after this
         playerProxy = app.gamePlayMachine.GetCurrentPlayer();
         aIPlaceSettlement(playerProxy);
-        $("#endTurn").trigger("click");
-        
-        // Auto turn 3
-        playerProxy = app.gamePlayMachine.GetCurrentPlayer();
-        aIPlaceSettlement(playerProxy);
-        $("#endTurn").trigger("click");
-        
-        // Auto turn 4
-        playerProxy = app.gamePlayMachine.GetCurrentPlayer();
-        aIPlaceSettlement(playerProxy);
-
-        app.gamePlayMachine.NextGamePhase();
-        
-        boardController.ToggleIntersectSelectMode();
-        boardController.ToggleRoadSelectMode();
+        aIPlaceRoad(playerProxy);
     }
 
+    function aIPlayGame(numTurns) {
+
+        var i;
+        for (i = 0; i < numTurns; i++) {
+            aITakeTurn();
+        }
+    }
+    
+    function aITakeTurn() {
+        
+        var playerProxy;
+        
+        $('#rollDice').trigger('click');
+        playerProxy = app.gamePlayMachine.GetCurrentPlayer();
+
+        aITradeToBank(playerProxy);
+
+        // If can place city, do it!
+        aIPlaceCity(playerProxy);
+
+        // Else If can place settlement, do it!
+        aIPlaceSettlement(playerProxy);
+
+        // Else if can place road, do it
+        aIPlaceRoad(playerProxy);
+
+        aIPlaceRoad(playerProxy);
+        $("#endTurn").trigger("click");
+    }
+
+    function aITradeToBank(playerProxy) {
+
+        var scarcest;
+        var randIndex;
+
+        // If has...
+        //      6 or more wheat
+        //      7 or more rock
+        //      5 or more of brick, sheep, wood
+        // Then trade it to bank at 4-1 for scarcest resource
+
+        var bankTradeCutoffs = {
+            'wheat' : 6,
+            'rock' : 7,
+            'brick' : 5,
+            'sheep' : 5,
+            'wood' : 5
+        };
+
+        function tradeGoNoGo(resourceType) {
+
+            var scarcest;
+            var randIndex;
+
+            var resCount = playerProxy.resources[resourceType];
+
+            if (resCount >= bankTradeCutoffs[resourceType]) {
+                scarcest = playerProxy.getScarcestResource();
+                randIndex = Math.round(Math.random()*(scarcest.length - 1));
+                playerProxy.tradeToBank(resourceType, scarcest[randIndex].type);
+
+                console.log("Trading 4 to 1: " + resourceType + " (has: " + resCount + ") for " + JSON.stringify(scarcest[randIndex]));
+            }
+        }
+
+        var i;
+        for (i = 0; i < Object.keys(bankTradeCutoffs).length; i++) {
+            tradeGoNoGo(Object.keys(bankTradeCutoffs)[i]);
+        }
+    }
+
+    function aIPlaceCity(playerProxy) {
+
+        // get all unoccupied nodes that are 2-away (eligible/free)
+        //var unoccupied = app.hexIntersectList.filter(x => !x.isOccupied())
+        var intersectIds = app.hexIntersectList.map(x => x.get('id'));
+        var evaluator = app.Rules.GetValidator();
+
+        var eligible = intersectIds.filter(x => evaluator.isIntersectPlaceable(playerProxy, 'city', x));
+        
+        if (eligible.length > 0) {
+
+            console.log("eligible cities: " + JSON.stringify(eligible));
+
+            var randEligIndex = Math.round(Math.random()*(eligible.length - 1));
+            console.log('randEligIndex: ' + randEligIndex);
+
+            var randIntId = eligible[randEligIndex];
+    
+            console.log("randIntId: " + randIntId);
+    
+            // Found a way to trigger Kinetic object event with 'fire'
+            // https://stackoverflow.com/questions/11819556/using-kineticjs-is-a-way-of-trigger-events-like-jquery
+            app.vertices[randIntId].fire("click");
+    
+            $(".city-btn").trigger("click");
+        }
+    }
+    
     function aIPlaceSettlement(playerProxy) {
 
         // get all unoccupied nodes that are 2-away (eligible/free)
@@ -430,27 +524,42 @@ app.GameBoardController = (function() {
         var evaluator = app.Rules.GetValidator();
 
         var eligible = intersectIds.filter(x => evaluator.isIntersectPlaceable(playerProxy, 'settlement', x));
-        var randEligIndex = Math.round(Math.random()*eligible.length) - 1;
-        var randIntId = eligible[randEligIndex];
+        
+        if (eligible.length > 0) {
 
-        // Found a way to trigger Kinetic object event with 'fire'
-        // https://stackoverflow.com/questions/11819556/using-kineticjs-is-a-way-of-trigger-events-like-jquery
-        app.vertices[randIntId].fire("click");
-
-        $(".settlement-btn").trigger("click");
+            console.log("eligible settlements: " + JSON.stringify(eligible));
+            var randEligIndex = Math.round(Math.random()*(eligible.length - 1));
+            
+            console.log('randEligIndex: ' + randEligIndex);
+            var randIntId = eligible[randEligIndex];
+    
+            console.log("randIntId: " + randIntId);
+    
+            // Found a way to trigger Kinetic object event with 'fire'
+            // https://stackoverflow.com/questions/11819556/using-kineticjs-is-a-way-of-trigger-events-like-jquery
+            app.vertices[randIntId].fire("click");
+    
+            $(".settlement-btn").trigger("click");
+        }
+    }
+    
+    function aIPlaceRoad(playerProxy) {
+        
+        var evaluator = app.Rules.GetValidator();
 
         var allRoadProxies = app.Proxies.RoadManager().getAllRoadProxies();
         var placeableRoads = allRoadProxies.filter(x => evaluator.isRoadPlaceable(playerProxy, "road", x));
+    
+        if (placeableRoads.length > 0) {
 
-        //var neighborRoads = app.Proxies.RoadManager().getNeighboringRoadProxies(randIntId);
-        var randomIndex = Math.round(Math.random()*(placeableRoads.length - 1));
+            var randomIndex = Math.round(Math.random()*(placeableRoads.length - 1));
+        
+            console.log("num neighbor roads: " + placeableRoads.length);
+            console.log("randomIndex to choose neighbor road: " + randomIndex);
 
-        console.log("randIntId: " + randIntId);
-        console.log("num neighbor roads: " + placeableRoads.length);
-        console.log("randomIndex to choose neighbor road: " + randomIndex);
-
-        var randRoadId = placeableRoads[randomIndex].id;
-        app.roadCenterPoints[randRoadId].fire("click");
+            var randRoadId = placeableRoads[randomIndex].id;
+            app.roadCenterPoints[randRoadId].fire("click");
+        }
     }
 
     function toggleVisibilityForArray(items) {

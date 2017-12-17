@@ -172,6 +172,47 @@ app.Proxies = (function() {
                 }
 
             },
+            tradeToBank: function(typeOffer, typeAsk) {
+
+                var offered = playerModel.get("resources")[typeOffer];
+
+                if (offered < 4) {
+                    return false;
+                }
+                else {
+                    playerModel.spend(typeOffer, 4);
+                    playerModel.addResource(typeAsk);
+                    return true;
+                }
+            },
+            getScarcestResource: function() {
+
+                var resources = playerModel.get("resources");
+
+                var resList = Object.keys(resources).map(x => { return { 'type': x, 'qty' : resources[x] }; });
+
+                var scarcest = resList.reduce(
+                    (accumulator, currentVal) =>  {
+        
+                        if (currentVal.qty < accumulator.qty) {
+                            return {
+                                'type' : currentVal.type,
+                                'qty' : currentVal.qty
+                            }
+                        }
+                        return {
+                            'type' : accumulator.type,
+                            'qty' : accumulator.qty
+                        }
+                    }, { 'type': 'unknown', 'qty': Infinity }
+                );
+
+                var equallyScarce = resList.filter(x => x.qty === scarcest.qty);
+
+                console.log("Scarce resources for player: " + JSON.stringify(equallyScarce));
+
+                return equallyScarce;
+            },
             spend: function(type, quantity) {
                 
                 playerModel.spend(type, quantity);
