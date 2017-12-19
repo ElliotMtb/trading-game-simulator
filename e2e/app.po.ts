@@ -1,11 +1,23 @@
-import { browser, by, element } from 'protractor';
+import { browser, by, element, protractor } from 'protractor';
 
 export class SettlersAppPage {
   navigateTo() {
     return browser.get('/');
   }
 
-  getParagraphText() {
-    return element(by.css('app-root h1')).getText();
+  clickBeginGame() {
+    element(by.css('a[href="#/begin"')).click();
+  }
+
+  setPlayerColor(playerNum, color) {
+    element.all(by.css('.selectColor[value=' + color + ']')).get(playerNum - 1).click();
+  }
+
+  setPlayerNameInput(name) {
+    element(by.css('#new-player')).sendKeys(name);
+  }
+
+  playerNameInputPressEnter() {
+    browser.actions().sendKeys(protractor.Key.ENTER).perform();
   }
 }

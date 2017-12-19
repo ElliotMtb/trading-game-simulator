@@ -9,7 +9,11 @@ exports.config = {
     './e2e/**/*.e2e-spec.ts'
   ],
   capabilities: {
-    'browserName': 'chrome'
+    'browserName': 'chrome',
+    // http://cvuorinen.net/2017/05/running-angular-tests-in-headless-chrome/
+    chromeOptions: {
+      args: [ "--headless", "--disable-gpu", "--window-size=1024x920" ]
+    }
   },
   directConnect: true,
   baseUrl: 'http://localhost:4200/',

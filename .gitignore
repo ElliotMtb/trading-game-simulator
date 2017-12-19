@@ -40,3 +40,9 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
+
+# Babel-transformed scripts
+/src/babel-xformed-scripts
+
+# e2e screenshots
+e2e/screenshots
