@@ -64,7 +64,7 @@ app.BoardBuilder = (function () {
             hexBuilder.BuildHex(hexId, hexInfo, arcEndX, arcEndY, kineticLayer);
         
             // Connect new intersections
-            var intersectBuilder = new app.IntersectionBuilder.IntersectionBuilder();
+            var intersectBuilder = new app.IntersectionBuilder.IntersectionBuilder(app);
 
             // When placing regular (non-ocean) hexes, need to assemble intersection adjacency info
             intersectBuilder.RadialSweep(arcEndX, arcEndY, app.GameBoardHexRadius, hexId);

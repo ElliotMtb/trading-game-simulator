@@ -4,7 +4,11 @@ app.IntersectionBuilder = (function() {
 
     var gameBoardController = new app.GameBoardController.Controller();
 
-    function IntersectionBuilder() {}
+    function IntersectionBuilder(app) {
+
+        this._idGenerator = app;
+        this._utils = app.Utility;
+    }
 
     var IntersectionBuilder_RadialSweep = function(centerX, centerY, hexRadius, idOfCurrentHex) {
         
@@ -19,30 +23,29 @@ app.IntersectionBuilder = (function() {
         // Forward sweep
         for (i= 0; i < 7; i++)
         {
-            xyPair = app.Utility.GetXYatArcEnd(centerX, centerY, hexRadius, (-1*i*2*Math.PI/6) - (-1*2*Math.PI/12));
+            xyPair = this._utils.GetXYatArcEnd(centerX, centerY, hexRadius, (-1*i*2*Math.PI/6) - (-1*2*Math.PI/12));
             vertexX = xyPair[0];
             vertexY = xyPair[1];
         
-            lastIntersectionInSweep = updateTheAdjacencies(idOfCurrentHex, vertexX, vertexY, lastIntersectionInSweep);
+            lastIntersectionInSweep = updateTheAdjacencies(this._utils, this._idGenerator, idOfCurrentHex, vertexX, vertexY, lastIntersectionInSweep);
         }
         
         // Reverse sweep (makes sure to get all the vertices adjacencies on the boundaries of the game board)
         for (i= 6; i >= 0; i--)
         {
-            xyPair = app.Utility.GetXYatArcEnd(centerX, centerY, hexRadius, (-1*i*2*Math.PI/6) - (-1*2*Math.PI/12));
+            xyPair = this._utils.GetXYatArcEnd(centerX, centerY, hexRadius, (-1*i*2*Math.PI/6) - (-1*2*Math.PI/12));
             vertexX = xyPair[0];
             vertexY = xyPair[1];
             
-            lastIntersectionInSweep = updateTheAdjacencies(idOfCurrentHex, vertexX, vertexY, lastIntersectionInSweep);
+            lastIntersectionInSweep = updateTheAdjacencies(this._utils, this._idGenerator, idOfCurrentHex, vertexX, vertexY, lastIntersectionInSweep);
         }
     };
 
     IntersectionBuilder.prototype.RadialSweep = IntersectionBuilder_RadialSweep;
 
-    var buildBoardIntersection = function(idOfCurrentHex, vertexX, vertexY, lastIntersectionInSweep) {
+    var buildBoardIntersection = function(newInterId, idOfCurrentHex, vertexX, vertexY, lastIntersectionInSweep) {
     
-        // TODO: refactor global call
-        var intersectionId = app.nextIntersectionId();
+        var intersectionId = newInterId;
         
         app.vertices[intersectionId] = new Kinetic.Circle({
             x: vertexX,
@@ -69,9 +72,7 @@ app.IntersectionBuilder = (function() {
         app.verticesText[intersectionId].hide();
         
         createIntersection(intersectionId, vertexX, vertexY);
-        
-        var currentHexType = app.ring[idOfCurrentHex];
-        
+                
         app.intersectToHexesAdjacency[intersectionId] = [];
         
         if (app.intersectToHexesAdjacency[intersectionId].indexOf(idOfCurrentHex) === -1)
@@ -102,14 +103,15 @@ app.IntersectionBuilder = (function() {
         return intersectionId;
     };
 
-    var updateTheAdjacencies = function(idOfCurrentHex, vertexX, vertexY, lastIntersectionInSweep) {
+    var updateTheAdjacencies = function(utils, idGen, idOfCurrentHex, vertexX, vertexY, lastIntersectionInSweep) {
         
-        var collisionIndex = checkForCollision(vertexX,vertexY);
+        var collisionIndex = checkForCollision(utils, vertexX,vertexY);
 
         // No collision
         if (collisionIndex === -1)
         {
-            var newIntersectionId = buildBoardIntersection(idOfCurrentHex, vertexX, vertexY, lastIntersectionInSweep);
+            var newIntersectId = idGen.nextIntersectionId();
+            var newIntersectionId = buildBoardIntersection(newIntersectId, idOfCurrentHex, vertexX, vertexY, lastIntersectionInSweep);
             
             lastIntersectionInSweep = newIntersectionId;
         }
@@ -119,7 +121,7 @@ app.IntersectionBuilder = (function() {
         
             // Don't create a new intersection
             // ...rather, update adjacent hexes list for existing intersection.
-            updateIntersection(idOfCurrentHex, vertexX, vertexY, collisionIndex, lastIntersectionInSweep);
+            updateIntersection(idGen, idOfCurrentHex, vertexX, vertexY, collisionIndex, lastIntersectionInSweep);
                 
             lastIntersectionInSweep = collisionIndex;
         }
@@ -127,9 +129,7 @@ app.IntersectionBuilder = (function() {
         return lastIntersectionInSweep;
     };
 
-    updateIntersection = function(idOfCurrentHex, vertexX, vertexY, collisionIndex, lastIntersectionInSweep) {
-
-        var currentHexType = app.ring[idOfCurrentHex];
+    updateIntersection = function(idGen, idOfCurrentHex, vertexX, vertexY, collisionIndex, lastIntersectionInSweep) {
         
         if (app.intersectToHexesAdjacency[collisionIndex].indexOf(idOfCurrentHex) === -1)
         {
@@ -151,7 +151,7 @@ app.IntersectionBuilder = (function() {
                 
                 var lastVertexY = app.vertices[lastIntersectionInSweep].attrs.y;
                 
-                placeRoadMarker(vertexX, lastVertexX, vertexY, lastVertexY, collisionIndex, lastIntersectionInSweep);
+                placeRoadMarker(idGen, vertexX, lastVertexX, vertexY, lastVertexY, collisionIndex, lastIntersectionInSweep);
 
                 // TODO: Perhaps need to put road centerId into adjacency list for neighboring intersections
                 // ...an intersection would need a list of adjacent road segments
@@ -166,13 +166,13 @@ app.IntersectionBuilder = (function() {
         app.hexIntersectList.create({'id':id,'x':x,'y':y, 'occupyingPiece': ''});
     };
             
-    var checkForCollision = function (x,y){
+    var checkForCollision = function (utils, x,y){
         
         for (var i = 0; i < app.vertices.length; i++)
         {
             var intersectionPosition = app.vertices[i].getPosition();
             
-            if (app.Utility.Distance(intersectionPosition.x, intersectionPosition.y, x, y) < 2)
+            if (utils.Distance(intersectionPosition.x, intersectionPosition.y, x, y) < 2)
             {
                 console.log("Collision detected!");
                 return i;
@@ -200,7 +200,7 @@ app.IntersectionBuilder = (function() {
         return false;
     };
 
-    var placeRoadMarker = function(x2, x1, y2, y1, intersectId1, intersectId2) {
+    var placeRoadMarker = function(idGen, x2, x1, y2, y1, intersectId1, intersectId2) {
 
         var xLeg = (x2 - x1);
         var yLeg = (y2 - y1);
@@ -232,7 +232,7 @@ app.IntersectionBuilder = (function() {
         // the 2 intersections (vertices). Then use that ratio to calculate the corresponding x and y values
         // (i.e. scaling down the legs that form a right triangle between the vertices)
         
-        var roadLength = 20;
+        var roadLength = app.RoadLength;
         var halfLength = roadLength/2;
         
         var vertexDistance = Math.sqrt(Math.pow(xLeg, 2) + Math.pow(yLeg, 2));
@@ -246,7 +246,7 @@ app.IntersectionBuilder = (function() {
         var roadXCenter = verticesMidpointX - roadCenterXAdjust;
         var roadYCenter = verticesMidpointY - roadCenterYAdjust;
         
-        var roadCenterId = app.nextRoadCenterId();
+        var roadCenterId = idGen.nextRoadCenterId();
         
         app.roadCenterPoints[roadCenterId] = new Kinetic.Circle({
             x: verticesMidpointX,
