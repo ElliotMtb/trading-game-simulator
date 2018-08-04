@@ -2,7 +2,8 @@ var app = app || {};
 
 app.IntersectionBuilder = (function() {
 
-    var gameBoardController = new app.GameBoardController.Controller();
+    var _gameBoardController = new app.GameBoardController.Controller();
+    var _boardDataManager = new app.Proxies.BoardDataManager();
 
     function IntersectionBuilder(app) {
 
@@ -43,50 +44,6 @@ app.IntersectionBuilder = (function() {
 
     IntersectionBuilder.prototype.RadialSweep = IntersectionBuilder_RadialSweep;
 
-    var buildBoardIntersection = function(newInterId, idOfCurrentHex, vertexX, vertexY, lastIntersectionInSweep) {
-    
-        var intersectionId = newInterId;
-        
-        app.vertices[intersectionId] = new Kinetic.Circle({
-            x: vertexX,
-            y: vertexY,
-            radius: 10,
-            fill: 'grey',
-            stroke: 'black',
-            strokeWidth: 1,
-            opacity: 0.75,
-            id: intersectionId
-        });
-        
-        app.vertices[intersectionId].hide();
-        
-        app.verticesText[intersectionId] = new Kinetic.Text({
-            x: vertexX + 10,
-            y: vertexY,
-            text: intersectionId,
-            fontSize: 15,
-            fontFamily: 'Calibri',
-            fill: 'red'
-        });
-        
-        app.verticesText[intersectionId].hide();
-        
-        createIntersection(intersectionId, vertexX, vertexY);
-                
-        boardDataManager = new app.Proxies.BoardDataManager();
-
-        var neighborHexes = boardDataManager.initIntersectAdjHexes(intersectionId);
-        neighborHexes.addNeighbor(idOfCurrentHex);
-        
-        var neighbors = boardDataManager.initIntersectNeighbors(intersectionId);
-        neighbors.addNeighbor(intersectionId);
-        neighbors.addNeighbor(lastIntersectionInSweep);
-
-        gameBoardController.BindIntersectClick(intersectionId);
-        
-        return intersectionId;
-    };
-
     var updateTheAdjacencies = function(utils, idGen, idOfCurrentHex, vertexX, vertexY, lastIntersectionInSweep) {
         
         var collisionIndex = checkForCollision(utils, vertexX,vertexY);
@@ -95,9 +52,11 @@ app.IntersectionBuilder = (function() {
         if (collisionIndex === -1)
         {
             var newIntersectId = idGen.nextIntersectionId();
-            var newIntersectionId = buildBoardIntersection(newIntersectId, idOfCurrentHex, vertexX, vertexY, lastIntersectionInSweep);
-            
-            lastIntersectionInSweep = newIntersectionId;
+
+            _boardDataManager.addIntersection(newIntersectId, idOfCurrentHex, vertexX, vertexY, lastIntersectionInSweep);
+            _gameBoardController.BindIntersectClick(newIntersectId);
+
+            lastIntersectionInSweep = newIntersectId;
         }
         else
         {
@@ -114,15 +73,13 @@ app.IntersectionBuilder = (function() {
     };
 
     updateIntersection = function(idGen, idOfCurrentHex, vertexX, vertexY, collisionIndex, lastIntersectionInSweep) {
-        
-        boardDataManager = new app.Proxies.BoardDataManager();
 
-        var neighborHexes = boardDataManager.getIntersectAdjHexes(collisionIndex);
+        var neighborHexes = _boardDataManager.getIntersectAdjHexes(collisionIndex);
         neighborHexes.addNeighbor(idOfCurrentHex);
         
         if (lastIntersectionInSweep !== undefined)
         {
-            var neighbors = boardDataManager.getIntersectNeighbors(collisionIndex);
+            var neighbors = _boardDataManager.getIntersectNeighbors(collisionIndex);
             neighbors.addNeighbor(lastIntersectionInSweep);
 
             // Create a new road marker at the midway point between the current intersection (collisionIndex)
@@ -142,12 +99,7 @@ app.IntersectionBuilder = (function() {
             }
         }
     };
-
-    var createIntersection = function(id, x, y) {
         
-        app.hexIntersectList.create({'id':id,'x':x,'y':y, 'occupyingPiece': ''});
-    };
-            
     var checkForCollision = function (utils, x,y){
         
         for (var i = 0; i < app.vertices.length; i++)
@@ -248,7 +200,7 @@ app.IntersectionBuilder = (function() {
         
         app.roadCenterPoints[roadCenterId].hide();
 
-        gameBoardController.BindRoadCenterClick(roadCenterId);
+        _gameBoardController.BindRoadCenterClick(roadCenterId);
     };
 
     return {

@@ -2,8 +2,85 @@ var app = app || {};
 
 app.Proxies = (function() {
 
+    function BoardVertices() {
+
+        function addVertex(intersectionId, vertexX, vertexY) {
+            
+            var vertex = new Kinetic.Circle({
+                x: vertexX,
+                y: vertexY,
+                radius: 10,
+                fill: 'grey',
+                stroke: 'black',
+                strokeWidth: 1,
+                opacity: 0.75,
+                id: intersectionId
+            });
+
+            app.vertices[intersectionId] = vertex;
+
+            vertex.hide();
+        
+            var vertexText = new Kinetic.Text({
+                x: vertexX + 10,
+                y: vertexY,
+                text: intersectionId,
+                fontSize: 15,
+                fontFamily: 'Calibri',
+                fill: 'red'
+            });
+            
+            app.verticesText[intersectionId] = vertexText;
+            vertexText.hide();
+
+            createIntersectionModel(intersectionId, vertexX, vertexY);
+
+            return BoardVertexProxy(intersectionId);
+        }
+
+        var createIntersectionModel = function(id, x, y) {
+        
+            app.hexIntersectList.create({'id':id,'x':x,'y':y, 'occupyingPiece': ''});
+        };
+
+        return {
+            addVertex: addVertex
+        };
+    }
+
+    function BoardVertexProxy(intersectionId) {
+        
+        var vertex = app.vertices[intersectionId];
+
+        return {
+            hide: function(intersectId) {
+                vertex.hide();
+            }
+        };
+    }
+
     function BoardDataManager() {
         
+        var _verticesManager = new app.Proxies.BoardVertices();
+
+        function addIntersection(newInterId, idOfCurrentHex, vertexX, vertexY, lastIntersectionInSweep) {
+            
+            var intersectionId = newInterId;
+        
+            _verticesManager.addVertex(intersectionId, vertexX, vertexY);
+            
+            var neighborHexes = initIntersectAdjHexes(intersectionId);
+            neighborHexes.addNeighbor(idOfCurrentHex);
+            
+            var neighbors = initIntersectNeighbors(intersectionId);
+            neighbors.addNeighbor(intersectionId);
+            neighbors.addNeighbor(lastIntersectionInSweep);
+        }
+
+        function udpateIntersection() {
+
+        }
+
         function getNewAdjacencyList(rawList) {
             return new AdjacencyList(rawList);
         }
@@ -29,6 +106,8 @@ app.Proxies = (function() {
         }
 
         return {
+            addIntersection: addIntersection,
+            udpateIntersection: udpateIntersection,
             initIntersectNeighbors: initIntersectNeighbors,
             getIntersectNeighbors: getIntersectNeighbors,
             initIntersectAdjHexes: initIntersectAdjHexes,
@@ -289,6 +368,8 @@ app.Proxies = (function() {
     }
 
     return {
+        BoardVertices: BoardVertices,
+        BoardVertexProxy, BoardVertexProxy,
         BoardDataManager: BoardDataManager,
         AdjacencyList: AdjacencyList,
         GetRoadProxy: GetRoadProxy,
