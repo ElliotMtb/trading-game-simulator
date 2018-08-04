@@ -2,6 +2,58 @@ var app = app || {};
 
 app.Proxies = (function() {
 
+    function BoardDataManager() {
+        
+        function getNewAdjacencyList(rawList) {
+            return new AdjacencyList(rawList);
+        }
+
+        // Intersection-to-Intersection Neighbors
+        function initIntersectNeighbors(intersectionId) {
+            app.intersectToIntersectAdjacency[intersectionId] = [];
+            return getIntersectNeighbors(intersectionId);
+        }
+
+        function getIntersectNeighbors(intersectionId) {
+            return getNewAdjacencyList(app.intersectToIntersectAdjacency[intersectionId]);
+        }
+
+        // Intersection-to-Hex Neighbors/adjacency
+        function initIntersectAdjHexes(intersectionId) {
+            app.intersectToHexesAdjacency[intersectionId] = [];
+            return getIntersectAdjHexes(intersectionId);
+        }
+
+        function getIntersectAdjHexes(intersectionId) {
+            return getNewAdjacencyList(app.intersectToHexesAdjacency[intersectionId]);
+        }
+
+        return {
+            initIntersectNeighbors: initIntersectNeighbors,
+            getIntersectNeighbors: getIntersectNeighbors,
+            initIntersectAdjHexes: initIntersectAdjHexes,
+            getIntersectAdjHexes: getIntersectAdjHexes
+        };
+    }
+
+    function AdjacencyList(neighbors) {
+
+        return {
+            addNeighbor: function(intersectionId) {
+
+                // e.g. At the start of a radial sweep, there is no "previous" intersection in the sweep
+                if (intersectionId !== undefined)
+                {
+                    // Don't add as neighbor if already present
+                    if (neighbors.indexOf(intersectionId) === -1)
+                    {
+                        neighbors.push(intersectionId);
+                    }
+                }
+            }
+        }
+    }
+
     function RoadManager() {
 
         function whereContainsBothIds(road, id1, id2) {
@@ -237,6 +289,8 @@ app.Proxies = (function() {
     }
 
     return {
+        BoardDataManager: BoardDataManager,
+        AdjacencyList: AdjacencyList,
         GetRoadProxy: GetRoadProxy,
         RoadManager: RoadManager,
         GetPlayerProxy: GetPlayerProxy,

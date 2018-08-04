@@ -73,30 +73,14 @@ app.IntersectionBuilder = (function() {
         
         createIntersection(intersectionId, vertexX, vertexY);
                 
-        app.intersectToHexesAdjacency[intersectionId] = [];
+        boardDataManager = new app.Proxies.BoardDataManager();
+
+        var neighborHexes = boardDataManager.initIntersectAdjHexes(intersectionId);
+        neighborHexes.addNeighbor(idOfCurrentHex);
         
-        if (app.intersectToHexesAdjacency[intersectionId].indexOf(idOfCurrentHex) === -1)
-        {
-            app.intersectToHexesAdjacency[intersectionId].push(idOfCurrentHex);
-        }
-        
-        app.intersectToIntersectAdjacency[intersectionId] = [];
-        
-        // Add self to intersection-intersection adjacency table
-        if (app.intersectToIntersectAdjacency[intersectionId].indexOf(intersectionId) === -1)
-        {
-            app.intersectToIntersectAdjacency[intersectionId].push(intersectionId);
-        }
-        
-        // At the start of the sweep, there is no "previous" intersection in the sweep
-        if (lastIntersectionInSweep !== undefined)
-        {
-            // Add previous to intersection-intersection adjacency table
-            if (app.intersectToIntersectAdjacency[intersectionId].indexOf(lastIntersectionInSweep) === -1)
-            {
-                app.intersectToIntersectAdjacency[intersectionId].push(lastIntersectionInSweep);
-            }
-        }
+        var neighbors = boardDataManager.initIntersectNeighbors(intersectionId);
+        neighbors.addNeighbor(intersectionId);
+        neighbors.addNeighbor(lastIntersectionInSweep);
 
         gameBoardController.BindIntersectClick(intersectionId);
         
@@ -131,18 +115,16 @@ app.IntersectionBuilder = (function() {
 
     updateIntersection = function(idGen, idOfCurrentHex, vertexX, vertexY, collisionIndex, lastIntersectionInSweep) {
         
-        if (app.intersectToHexesAdjacency[collisionIndex].indexOf(idOfCurrentHex) === -1)
-        {
-            app.intersectToHexesAdjacency[collisionIndex].push(idOfCurrentHex);
-        }
+        boardDataManager = new app.Proxies.BoardDataManager();
+
+        var neighborHexes = boardDataManager.getIntersectAdjHexes(collisionIndex);
+        neighborHexes.addNeighbor(idOfCurrentHex);
         
         if (lastIntersectionInSweep !== undefined)
         {
-            if (app.intersectToIntersectAdjacency[collisionIndex].indexOf(lastIntersectionInSweep) === -1)
-            {
-                app.intersectToIntersectAdjacency[collisionIndex].push(lastIntersectionInSweep);
-            }
-            
+            var neighbors = boardDataManager.getIntersectNeighbors(collisionIndex);
+            neighbors.addNeighbor(lastIntersectionInSweep);
+
             // Create a new road marker at the midway point between the current intersection (collisionIndex)
             // and the last intersection in the sweep, only if the 2 points are not the same point.
             if (lastIntersectionInSweep !== collisionIndex && !isCenterPointDrawn(collisionIndex, lastIntersectionInSweep))
