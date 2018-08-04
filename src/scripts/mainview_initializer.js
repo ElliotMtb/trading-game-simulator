@@ -5,7 +5,7 @@ var ViewInitializer = (function() {
         //hexboard
 
         app.GameBoardHexRadius = 45;
-        
+        app.RoadLength = 20;
         
         app.GameBoardCenterX = 450;
         app.GameBoardCenterY = 350;

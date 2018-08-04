@@ -160,8 +160,7 @@ app.GameBoardController = (function() {
                 
                 installRoadPlaceholder(playerProxy.id, "road", roadProxy.id);
 
-                // TODO: Use "global" road length
-                var road = piecesBuilder.MakeRoad(this.attrs.roadX, this.attrs.roadY, 20, playerProxy["color"], this.attrs.angle);
+                var road = piecesBuilder.MakeRoad(this.attrs.roadX, this.attrs.roadY, app.RoadLength, playerProxy["color"], this.attrs.angle);
                 
                 app.kineticLayer.add(road);
                 app.kineticLayer.draw();
