@@ -63,6 +63,9 @@ app.Proxies = (function() {
         
         var _verticesManager = new app.Proxies.BoardVertices();
 
+        /*
+            Assumes a radial sweep is happening
+        */
         function addIntersection(newInterId, idOfCurrentHex, vertexX, vertexY, lastIntersectionInSweep) {
             
             var intersectionId = newInterId;
@@ -77,9 +80,122 @@ app.Proxies = (function() {
             neighbors.addNeighbor(lastIntersectionInSweep);
         }
 
-        function udpateIntersection() {
+        /*
+            Assumes a radial sweep is happening
+        */
+        function updateIntersection(gameBoardController, idGen, idOfCurrentHex, vertexX, vertexY, collisionIndex, lastIntersectionInSweep) {
 
+            var neighborHexes = getIntersectAdjHexes(collisionIndex);
+            
+            neighborHexes.addNeighbor(idOfCurrentHex);
+            
+            if (lastIntersectionInSweep !== undefined)
+            {
+                var neighbors = getIntersectNeighbors(collisionIndex);
+                neighbors.addNeighbor(lastIntersectionInSweep);
+
+                // Create a new road marker at the midway point between the current intersection (collisionIndex)
+                // and the last intersection in the sweep, only if the 2 points are not the same point.
+                if (lastIntersectionInSweep !== collisionIndex && !isCenterPointDrawn(collisionIndex, lastIntersectionInSweep))
+                {
+                    var lastVertexX = app.vertices[lastIntersectionInSweep].attrs.x;
+                    
+                    var lastVertexY = app.vertices[lastIntersectionInSweep].attrs.y;
+                    
+                    var roadCenterId = idGen.nextRoadCenterId();
+                    placeRoadMarker(roadCenterId, vertexX, lastVertexX, vertexY, lastVertexY, collisionIndex, lastIntersectionInSweep);
+                    gameBoardController.BindRoadCenterClick(roadCenterId);
+
+                    // TODO: Perhaps need to put road centerId into adjacency list for neighboring intersections
+                    // ...an intersection would need a list of adjacent road segments
+                    // ...it would be faster than having to derrive/compute every time
+                    // from intersection neighbors
+                }
+            }
         }
+
+        var isCenterPointDrawn = function(intersect1, intersect2) {
+        
+            for (var i = 0; i < app.roadCenterPoints.length; i++)
+            {
+                var intersectIdsArray = app.roadCenterPoints[i].attrs.intersectionIds;
+                
+                // If both intersection Ids are found in the center point, then we know
+                // the center point has already been drawn
+                if (intersectIdsArray.indexOf(intersect1) !== -1 &&
+                        intersectIdsArray.indexOf(intersect2) !== -1)
+                {
+                    return true;
+                }
+            }
+            
+            return false;
+        };
+
+        var placeRoadMarker = function(roadCenterId, x2, x1, y2, y1, intersectId1, intersectId2) {
+
+            var xLeg = (x2 - x1);
+            var yLeg = (y2 - y1);
+            
+            // The road center point is half way between the 2 vertices
+            var verticesMidpointX = x2 - xLeg/2;
+            var verticesMidpointY = y2 - yLeg/2;
+        
+            var oppositeSideLen = y2-y1;
+            var adjacentSideLen = x2-x1;
+            
+            // in radians
+            var theta = Math.atan(oppositeSideLen/adjacentSideLen);
+            
+            // Restore "quadrant" (...because arctan loses signs)
+            if (oppositeSideLen < 0 && adjacentSideLen < 0)
+            {
+                theta += Math.PI;
+            }
+            else if (adjacentSideLen < 0)
+            {
+                theta += Math.PI;
+            }
+            
+            var inDegrees = theta/(Math.PI/180);
+            
+            // Translate the road so that the center point matches the center point between the 2 intersections.
+            // First, find the ratio of half the road length compared to the distance between
+            // the 2 intersections (vertices). Then use that ratio to calculate the corresponding x and y values
+            // (i.e. scaling down the legs that form a right triangle between the vertices)
+            
+            var roadLength = app.RoadLength;
+            var halfLength = roadLength/2;
+            
+            var vertexDistance = Math.sqrt(Math.pow(xLeg, 2) + Math.pow(yLeg, 2));
+            
+            var ratio = halfLength/vertexDistance;
+            
+            var roadCenterXAdjust = ratio * xLeg;
+            var roadCenterYAdjust = ratio * yLeg;
+            
+            // roadXCenter after offset translation to put center of road on vertex midpoint
+            var roadXCenter = verticesMidpointX - roadCenterXAdjust;
+            var roadYCenter = verticesMidpointY - roadCenterYAdjust;
+            
+            app.roadCenterPoints[roadCenterId] = new Kinetic.Circle({
+                x: verticesMidpointX,
+                y: verticesMidpointY,
+                radius: 10,
+                fill: 'white',
+                stroke: 'black',
+                opacity: 0.75,
+                strokeWidth: 1,
+                intersectionIds: [intersectId1, intersectId2],
+                id: roadCenterId,
+                angle: theta,
+                roadX: roadXCenter,
+                roadY: roadYCenter,
+                occupyingPiece: ''
+            });
+            
+            app.roadCenterPoints[roadCenterId].hide();
+        };
 
         function getNewAdjacencyList(rawList) {
             return new AdjacencyList(rawList);
@@ -107,7 +223,7 @@ app.Proxies = (function() {
 
         return {
             addIntersection: addIntersection,
-            udpateIntersection: udpateIntersection,
+            updateIntersection: updateIntersection,
             initIntersectNeighbors: initIntersectNeighbors,
             getIntersectNeighbors: getIntersectNeighbors,
             initIntersectAdjHexes: initIntersectAdjHexes,
