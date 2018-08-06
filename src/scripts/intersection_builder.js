@@ -13,56 +13,51 @@ app.IntersectionBuilder = (function() {
 
     var IntersectionBuilder_RadialSweep = function(centerX, centerY, hexRadius, idOfCurrentHex) {
 
+        // Get range of 0 to 6
+        // ES6 ... 'spread' operator
         var fwdIndices = [...Array(7).keys()];
 
-        // Forward sweep
+        // Forward radial vertex-index sweep
         sweep(
             fwdIndices,
             centerX,
             centerY,
             hexRadius,
             idOfCurrentHex,
-            this._utils, this._idGenerator
+            this._idGenerator
         );
 
-        // Reverse sweep
+        // Reverse radial vertex-index sweep
         sweep(
             fwdIndices.reverse(),
             centerX,
             centerY,
             hexRadius,
             idOfCurrentHex,
-            this._utils, this._idGenerator
+            this._idGenerator
         );
     };
 
-    function sweep(indicesSeq, centerX, centerY, hexRadius, idOfCurrentHex, utils, idGen) {
-
-        var vertexX;
-        var vertexY;
-        var i;
-    
-        var xyPair;
+    function sweep(indicesSeq, centerX, centerY, hexRadius, idOfCurrentHex, idGen) {
 
         var lastIntersectionInSweep;        
 
-        for (i= 0; i < 7; i++)
-        {
-            var index = indicesSeq[i];
+        indicesSeq.forEach(function(radialIndex) {
 
-            xyPair = utils.GetXYatArcEnd(centerX, centerY, hexRadius, (-1*index*2*Math.PI/6) - (-1*2*Math.PI/12));
-            vertexX = xyPair[0];
-            vertexY = xyPair[1];
-        
-            lastIntersectionInSweep = updateTheAdjacencies(utils, idGen, idOfCurrentHex, vertexX, vertexY, lastIntersectionInSweep);
-        }
+            var vertexCoords = _boardDataManager.getHexVertexCoords(centerX, centerY, hexRadius, radialIndex);
+
+            lastIntersectionInSweep = updateTheAdjacencies(idGen, idOfCurrentHex, vertexCoords, lastIntersectionInSweep);
+        });
     }
 
     IntersectionBuilder.prototype.RadialSweep = IntersectionBuilder_RadialSweep;
 
-    var updateTheAdjacencies = function(utils, idGen, idOfCurrentHex, vertexX, vertexY, lastIntersectionInSweep) {
+    var updateTheAdjacencies = function(idGen, idOfCurrentHex, vertexCoords, lastIntersectionInSweep) {
         
-        var collisionIndex = checkForCollision(utils, vertexX,vertexY);
+        var vertexX = vertexCoords[0];
+        var vertexY = vertexCoords[1];
+
+        var collisionIndex = _boardDataManager.indexOfExistingIntersection(vertexX, vertexY);
 
         // No collision
         if (collisionIndex === -1)
@@ -84,24 +79,7 @@ app.IntersectionBuilder = (function() {
         
         return lastIntersectionInSweep;
     };
-     
-    var checkForCollision = function (utils, x,y){
-        
-        // TODO: Use proxy/model to deal with vertices
-        for (var i = 0; i < app.vertices.length; i++)
-        {
-            var intersectionPosition = app.vertices[i].getPosition();
-            
-            if (utils.Distance(intersectionPosition.x, intersectionPosition.y, x, y) < 2)
-            {
-                console.log("Collision detected!");
-                return i;
-            }
-        }
     
-        return -1;
-    };
-
     return {
         IntersectionBuilder : IntersectionBuilder
     };

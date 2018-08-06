@@ -62,7 +62,8 @@ app.Proxies = (function() {
     function BoardDataManager() {
         
         var _verticesManager = new app.Proxies.BoardVertices();
-
+        var _utils = app.Utility;
+            
         /*
             Assumes a radial sweep is happening
         */
@@ -113,6 +114,38 @@ app.Proxies = (function() {
                 }
             }
         }
+
+        var indexOfExistingIntersection = function(x, y) {
+            
+            // Find any colliding vertices
+            var collisions = app.vertices.filter(vertex => isCollision(vertex, x, y));
+
+            if (collisions.length > 1) {
+                throw "ERROR: Single point should never collide with more than 1 verted.";
+            }
+            
+            // Return the index of the first vertex collision
+            // findIndex returns -1 if not found
+            // TODO: Perhaps should use a VertexProxy
+            return app.vertices.findIndex(i =>
+                collisions.some(c =>
+                    c.getPosition().x === i.getPosition().x &&
+                    c.getPosition().y === i.getPosition().y
+                )
+            );
+        }
+        
+        var isCollision = function (vertex, x, y){
+            
+            var vertexCoords = vertex.getPosition();
+
+            if (_utils.Distance(vertexCoords.x, vertexCoords.y, x, y) < 2)
+            {
+                return true;
+            }
+
+            return false;
+        };
 
         var isCenterPointDrawn = function(intersect1, intersect2) {
         
@@ -221,7 +254,24 @@ app.Proxies = (function() {
             return getNewAdjacencyList(app.intersectToHexesAdjacency[intersectionId]);
         }
 
+        function getHexVertexCoords(centerX, centerY, hexRadius, radialIndex) {
+
+            // -60 degree offset (negative is for counter-clockwise direction)
+            var angleIncrement = -2 * Math.PI / 6;
+            
+            // -30 degree offset (negative is for counter-clockwise direction)
+            var angleOffset = -2 * Math.PI / 12;
+
+            var angleToVertex = radialIndex * angleIncrement - angleOffset;
+
+            var xyPair = _utils.GetXYatArcEnd(centerX, centerY, hexRadius, angleToVertex);
+            
+            return xyPair;
+        }
+
         return {
+            getHexVertexCoords: getHexVertexCoords,
+            indexOfExistingIntersection: indexOfExistingIntersection,
             addIntersection: addIntersection,
             updateIntersection: updateIntersection,
             initIntersectNeighbors: initIntersectNeighbors,
