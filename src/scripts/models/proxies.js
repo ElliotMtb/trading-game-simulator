@@ -4,8 +4,8 @@ app.Proxies = (function() {
 
     function BoardVertices() {
 
-        function addVertex(intersectionId, vertexX, vertexY) {
-            
+        function getNewVertexCircle(intersectionId, vertexX, vertexY) {
+
             var vertex = new Kinetic.Circle({
                 x: vertexX,
                 y: vertexY,
@@ -17,10 +17,11 @@ app.Proxies = (function() {
                 id: intersectionId
             });
 
-            app.vertices[intersectionId] = vertex;
+            return vertex;
+        }
 
-            vertex.hide();
-        
+        function getNewVertexText(intersectionId, vertexX, vertexY) {
+
             var vertexText = new Kinetic.Text({
                 x: vertexX + 10,
                 y: vertexY,
@@ -29,32 +30,57 @@ app.Proxies = (function() {
                 fontFamily: 'Calibri',
                 fill: 'red'
             });
-            
-            app.verticesText[intersectionId] = vertexText;
-            vertexText.hide();
 
-            createIntersectionModel(intersectionId, vertexX, vertexY);
-
-            return BoardVertexProxy(intersectionId);
+            return vertexText;
         }
 
-        var createIntersectionModel = function(id, x, y) {
+        function addVertex(intersectionId, vertexX, vertexY) {
+
+            var vertex = getNewVertexCircle(intersectionId, vertexX, vertexY);
+            app.vertices[intersectionId] = vertex;
         
-            app.hexIntersectList.create({'id':id,'x':x,'y':y, 'occupyingPiece': ''});
-        };
+            var vertexText = getNewVertexText(intersectionId, vertexX, vertexY);
+            app.verticesText[intersectionId] = vertexText;
+
+            var vertexProxy = new BoardVertexProxy(vertex, vertexText);
+
+            // Create the Backbone model
+            app.hexIntersectList.create({'id':intersectionId,'x':vertexX,'y':vertexY, 'occupyingPiece': ''});
+
+            return vertexProxy;
+        }
+
+        function getVertexProxy(intersectionId) {
+
+            var vertex = app.vertices[intersectionId];
+            var vertexText = app.verticesText[intersectionId];
+
+            return new BoardVertexProxy(vertex, vertexText);
+        }
+
+        function getAllVertexProxies() {
+            return app.vertices.map(x => new BoardVertexProxy(x));
+        }
 
         return {
-            addVertex: addVertex
+            addVertex: addVertex,
+            getVertexProxy: getVertexProxy,
+            getAllVertexProxies: getAllVertexProxies
         };
     }
 
-    function BoardVertexProxy(intersectionId) {
+    function BoardVertexProxy(vertex, vertexText) {
         
-        var vertex = app.vertices[intersectionId];
-
         return {
             hide: function(intersectId) {
                 vertex.hide();
+                vertexText.hide();
+            },
+            getX: function() {
+                return vertex.attrs.x;
+            },
+            getY: function() {
+                return vertex.attrs.y;
             }
         };
     }
@@ -99,12 +125,19 @@ app.Proxies = (function() {
                 // and the last intersection in the sweep, only if the 2 points are not the same point.
                 if (lastIntersectionInSweep !== collisionIndex && !isCenterPointDrawn(collisionIndex, lastIntersectionInSweep))
                 {
-                    var lastVertexX = app.vertices[lastIntersectionInSweep].attrs.x;
-                    
-                    var lastVertexY = app.vertices[lastIntersectionInSweep].attrs.y;
-                    
+                    var lastVertexProxy = _verticesManager.getVertexProxy(lastIntersectionInSweep);
+
                     var roadCenterId = idGen.nextRoadCenterId();
-                    placeRoadMarker(roadCenterId, vertexX, lastVertexX, vertexY, lastVertexY, collisionIndex, lastIntersectionInSweep);
+                    placeRoadMarker(
+                        roadCenterId, 
+                        vertexX,
+                        lastVertexProxy.getX(),
+                        vertexY,
+                        lastVertexProxy.getY(),
+                        collisionIndex,
+                        lastIntersectionInSweep
+                    );
+                    
                     gameBoardController.BindRoadCenterClick(roadCenterId);
 
                     // TODO: Perhaps need to put road centerId into adjacency list for neighboring intersections
@@ -118,7 +151,9 @@ app.Proxies = (function() {
         var indexOfExistingIntersection = function(x, y) {
             
             // Find any colliding vertices
-            var collisions = app.vertices.filter(vertex => isCollision(vertex, x, y));
+            var vertexProxies = _verticesManager.getAllVertexProxies();
+
+            var collisions = vertexProxies.filter(vertexProxy => isCollision(vertexProxy, x, y));
 
             if (collisions.length > 1) {
                 throw "ERROR: Single point should never collide with more than 1 verted.";
@@ -127,19 +162,23 @@ app.Proxies = (function() {
             // Return the index of the first vertex collision
             // findIndex returns -1 if not found
             // TODO: Perhaps should use a VertexProxy
-            return app.vertices.findIndex(i =>
+            return vertexProxies.findIndex(i =>
                 collisions.some(c =>
-                    c.getPosition().x === i.getPosition().x &&
-                    c.getPosition().y === i.getPosition().y
+                    isCollision(i, c.getX(), c.getY())
                 )
             );
         }
         
-        var isCollision = function (vertex, x, y){
-            
-            var vertexCoords = vertex.getPosition();
+        /*
+            Determine if 2 coordinate pairs can be considered equivalent i.e. "collide".
 
-            if (_utils.Distance(vertexCoords.x, vertexCoords.y, x, y) < 2)
+            Note: It's very important to account for precision differences such as:
+                X value 449.99999999999994 must be considered equivalent to 450
+                ...therefore I have chosen a more than generous collision margin of 2
+        */
+        var isCollision = function (vertexProxy, x, y){
+            
+            if (_utils.Distance(vertexProxy.getX(), vertexProxy.getY(), x, y) < 2)
             {
                 return true;
             }
