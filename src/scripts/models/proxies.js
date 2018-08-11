@@ -42,7 +42,7 @@ app.Proxies = (function() {
             var vertexText = getNewVertexText(intersectionId, vertexX, vertexY);
             app.verticesText[intersectionId] = vertexText;
 
-            var vertexProxy = new BoardVertexProxy(vertex, vertexText);
+            var vertexProxy = new BoardVertexProxy(vertex);
 
             // Create the Backbone model
             app.hexIntersectList.create({'id':intersectionId,'x':vertexX,'y':vertexY, 'occupyingPiece': ''});
@@ -53,9 +53,8 @@ app.Proxies = (function() {
         function getVertexProxy(intersectionId) {
 
             var vertex = app.vertices[intersectionId];
-            var vertexText = app.verticesText[intersectionId];
-
-            return new BoardVertexProxy(vertex, vertexText);
+            
+            return new BoardVertexProxy(vertex);
         }
 
         function getAllVertexProxies() {
@@ -69,8 +68,10 @@ app.Proxies = (function() {
         };
     }
 
-    function BoardVertexProxy(vertex, vertexText) {
+    function BoardVertexProxy(vertex) {
         
+        var vertexText = app.verticesText[getId()];
+
         function getId() {
             return vertex.attrs.id;
         }
@@ -101,6 +102,12 @@ app.Proxies = (function() {
 
                 var neighbors = getIntersectNeighbors(this.getId());
                 neighbors.addNeighbor(intersectionId);
+            },
+            getVertex: function () {
+                return vertex;
+            },
+            getVertexText: function() {
+                return vertexText;
             },
             initIntersectNeighbors: initIntersectNeighbors
         };

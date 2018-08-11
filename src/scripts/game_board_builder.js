@@ -19,13 +19,13 @@ app.BoardBuilder = (function () {
         drawHexRings(1, 3, initialHexId + numHexes, radiusToFirstRing, kineticLayer);
 
         // TODO: It would be more seamless if this was done "inline/in-order" I suppose
-        // TODO: Don't use global variables
         // Add resulting components to the board
-        for (var i = 0; i < app.vertices.length; i++)
-        {
-            kineticLayer.add(app.vertices[i]);
-            kineticLayer.add(app.verticesText[i]);
-        }
+        var vertices = app.Proxies.BoardVertices().getAllVertexProxies();
+
+        vertices.map(function(x) {
+            kineticLayer.add(x.getVertex());
+            kineticLayer.add(x.getVertexText());
+        });
         
         for (var r = 0; r < app.roads.length; r++)
         {
