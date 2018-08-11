@@ -71,8 +71,22 @@ app.Proxies = (function() {
 
     function BoardVertexProxy(vertex, vertexText) {
         
+        function getId() {
+            return vertex.attrs.id;
+        }
+
+        function getIntersectNeighbors(intersectionId) {
+            return new AdjacencyList(app.intersectToIntersectAdjacency[intersectionId]);
+        }
+
+        // Intersection-to-Intersection Neighbors
+        function initIntersectNeighbors() {
+            app.intersectToIntersectAdjacency[getId()] = [];
+            return getIntersectNeighbors(getId());
+        }
+
         return {
-            hide: function(intersectId) {
+            hide: function() {
                 vertex.hide();
                 vertexText.hide();
             },
@@ -81,7 +95,14 @@ app.Proxies = (function() {
             },
             getY: function() {
                 return vertex.attrs.y;
-            }
+            },
+            getId: getId,
+            addNeighborIntersection: function(intersectionId) {
+
+                var neighbors = getIntersectNeighbors(this.getId());
+                neighbors.addNeighbor(intersectionId);
+            },
+            initIntersectNeighbors: initIntersectNeighbors
         };
     }
 
@@ -97,47 +118,52 @@ app.Proxies = (function() {
             
             var intersectionId = newInterId;
         
-            _verticesManager.addVertex(intersectionId, vertexX, vertexY);
+            var newVertex = _verticesManager.addVertex(intersectionId, vertexX, vertexY);
             
             var neighborHexes = initIntersectAdjHexes(intersectionId);
             neighborHexes.addNeighbor(idOfCurrentHex);
             
-            var neighbors = initIntersectNeighbors(intersectionId);
-            neighbors.addNeighbor(intersectionId);
-            neighbors.addNeighbor(lastIntersectionInSweep);
+            newVertex.initIntersectNeighbors();
+            newVertex.addNeighborIntersection(intersectionId);
+            newVertex.addNeighborIntersection(lastIntersectionInSweep);
+
+            newVertex.hide();
         }
 
         /*
             Assumes a radial sweep is happening
         */
-        function updateIntersection(gameBoardController, idGen, idOfCurrentHex, vertexX, vertexY, collisionIndex, lastIntersectionInSweep) {
+        function updateIntersection(gameBoardController, idGen, idOfCurrentHex, collisionIndex, lastIntersectionInSweep) {
 
+            var collisionVertex = _verticesManager.getVertexProxy(collisionIndex);
+
+            // TODO: This can be encapsulated inside VertexProxy
             var neighborHexes = getIntersectAdjHexes(collisionIndex);
-            
             neighborHexes.addNeighbor(idOfCurrentHex);
             
             if (lastIntersectionInSweep !== undefined)
             {
-                var neighbors = getIntersectNeighbors(collisionIndex);
-                neighbors.addNeighbor(lastIntersectionInSweep);
+                collisionVertex.addNeighborIntersection(lastIntersectionInSweep);
+                
+                var lastVertexProxy = _verticesManager.getVertexProxy(lastIntersectionInSweep);
 
                 // Create a new road marker at the midway point between the current intersection (collisionIndex)
                 // and the last intersection in the sweep, only if the 2 points are not the same point.
-                if (lastIntersectionInSweep !== collisionIndex && !isCenterPointDrawn(collisionIndex, lastIntersectionInSweep))
+                if (lastIntersectionInSweep !== collisionIndex &&
+                    !app.Proxies.RoadManager().isRoadMarkerDrawn(collisionIndex, lastIntersectionInSweep))
                 {
-                    var lastVertexProxy = _verticesManager.getVertexProxy(lastIntersectionInSweep);
-
                     var roadCenterId = idGen.nextRoadCenterId();
-                    placeRoadMarker(
+
+                    var newRoadProxy = app.Proxies.RoadManager().addRoadMarker(
                         roadCenterId, 
-                        vertexX,
-                        lastVertexProxy.getX(),
-                        vertexY,
-                        lastVertexProxy.getY(),
+                        collisionVertex.getX(), lastVertexProxy.getX(),
+                        collisionVertex.getY(), lastVertexProxy.getY(),
                         collisionIndex,
                         lastIntersectionInSweep
                     );
-                    
+
+                    newRoadProxy.hide();
+
                     gameBoardController.BindRoadCenterClick(roadCenterId);
 
                     // TODO: Perhaps need to put road centerId into adjacency list for neighboring intersections
@@ -186,7 +212,66 @@ app.Proxies = (function() {
             return false;
         };
 
-        var isCenterPointDrawn = function(intersect1, intersect2) {
+        function getNewAdjacencyList(rawList) {
+            return new AdjacencyList(rawList);
+        }
+
+        // Intersection-to-Hex Neighbors/adjacency
+        function initIntersectAdjHexes(intersectionId) {
+            app.intersectToHexesAdjacency[intersectionId] = [];
+            return getIntersectAdjHexes(intersectionId);
+        }
+
+        function getIntersectAdjHexes(intersectionId) {
+            return getNewAdjacencyList(app.intersectToHexesAdjacency[intersectionId]);
+        }
+
+        function getHexVertexCoords(centerX, centerY, hexRadius, radialIndex) {
+
+            // -60 degree offset (negative is for counter-clockwise direction)
+            var angleIncrement = -2 * Math.PI / 6;
+            
+            // -30 degree offset (negative is for counter-clockwise direction)
+            var angleOffset = -2 * Math.PI / 12;
+
+            var angleToVertex = radialIndex * angleIncrement - angleOffset;
+
+            var xyPair = _utils.GetXYatArcEnd(centerX, centerY, hexRadius, angleToVertex);
+            
+            return xyPair;
+        }
+
+        return {
+            getHexVertexCoords: getHexVertexCoords,
+            indexOfExistingIntersection: indexOfExistingIntersection,
+            addIntersection: addIntersection,
+            updateIntersection: updateIntersection,
+            initIntersectAdjHexes: initIntersectAdjHexes,
+            getIntersectAdjHexes: getIntersectAdjHexes
+        };
+    }
+
+    function AdjacencyList(neighbors) {
+
+        return {
+            addNeighbor: function(intersectionId) {
+
+                // e.g. At the start of a radial sweep, there is no "previous" intersection in the sweep
+                if (intersectionId !== undefined)
+                {
+                    // Don't add as neighbor if already present
+                    if (neighbors.indexOf(intersectionId) === -1)
+                    {
+                        neighbors.push(intersectionId);
+                    }
+                }
+            }
+        }
+    }
+
+    function RoadManager() {
+
+        var isRoadMarkerDrawn = function(intersect1, intersect2) {
         
             for (var i = 0; i < app.roadCenterPoints.length; i++)
             {
@@ -204,7 +289,7 @@ app.Proxies = (function() {
             return false;
         };
 
-        var placeRoadMarker = function(roadCenterId, x2, x1, y2, y1, intersectId1, intersectId2) {
+        function addRoadMarker(roadCenterId, x2, x1, y2, y1, intersectId1, intersectId2) {
 
             var xLeg = (x2 - x1);
             var yLeg = (y2 - y1);
@@ -250,95 +335,46 @@ app.Proxies = (function() {
             var roadXCenter = verticesMidpointX - roadCenterXAdjust;
             var roadYCenter = verticesMidpointY - roadCenterYAdjust;
             
-            app.roadCenterPoints[roadCenterId] = new Kinetic.Circle({
-                x: verticesMidpointX,
-                y: verticesMidpointY,
-                radius: 10,
-                fill: 'white',
-                stroke: 'black',
-                opacity: 0.75,
-                strokeWidth: 1,
-                intersectionIds: [intersectId1, intersectId2],
-                id: roadCenterId,
-                angle: theta,
-                roadX: roadXCenter,
-                roadY: roadYCenter,
-                occupyingPiece: ''
-            });
-            
-            app.roadCenterPoints[roadCenterId].hide();
+            var newCenter = getNewRoadCenterCircle(
+                verticesMidpointX, verticesMidpointY,
+                intersectId1, intersectId2,
+                roadCenterId,
+                theta,
+                roadXCenter,
+                roadYCenter
+            );
+
+            app.roadCenterPoints[roadCenterId] = newCenter;
+
+            return GetRoadProxy(newCenter)
         };
 
-        function getNewAdjacencyList(rawList) {
-            return new AdjacencyList(rawList);
-        }
-
-        // Intersection-to-Intersection Neighbors
-        function initIntersectNeighbors(intersectionId) {
-            app.intersectToIntersectAdjacency[intersectionId] = [];
-            return getIntersectNeighbors(intersectionId);
-        }
-
-        function getIntersectNeighbors(intersectionId) {
-            return getNewAdjacencyList(app.intersectToIntersectAdjacency[intersectionId]);
-        }
-
-        // Intersection-to-Hex Neighbors/adjacency
-        function initIntersectAdjHexes(intersectionId) {
-            app.intersectToHexesAdjacency[intersectionId] = [];
-            return getIntersectAdjHexes(intersectionId);
-        }
-
-        function getIntersectAdjHexes(intersectionId) {
-            return getNewAdjacencyList(app.intersectToHexesAdjacency[intersectionId]);
-        }
-
-        function getHexVertexCoords(centerX, centerY, hexRadius, radialIndex) {
-
-            // -60 degree offset (negative is for counter-clockwise direction)
-            var angleIncrement = -2 * Math.PI / 6;
+        function getNewRoadCenterCircle(
+            verticesMidpointX, verticesMidpointY,
+            intersectId1, intersectId2,
+            roadCenterId,
+            theta,
+            roadXCenter,
+            roadYCenter) {
             
-            // -30 degree offset (negative is for counter-clockwise direction)
-            var angleOffset = -2 * Math.PI / 12;
+                var circle = new Kinetic.Circle({
+                    x: verticesMidpointX,
+                    y: verticesMidpointY,
+                    radius: 10,
+                    fill: 'white',
+                    stroke: 'black',
+                    opacity: 0.75,
+                    strokeWidth: 1,
+                    intersectionIds: [intersectId1, intersectId2],
+                    id: roadCenterId,
+                    angle: theta,
+                    roadX: roadXCenter,
+                    roadY: roadYCenter,
+                    occupyingPiece: ''
+                });
 
-            var angleToVertex = radialIndex * angleIncrement - angleOffset;
-
-            var xyPair = _utils.GetXYatArcEnd(centerX, centerY, hexRadius, angleToVertex);
-            
-            return xyPair;
+                return circle;
         }
-
-        return {
-            getHexVertexCoords: getHexVertexCoords,
-            indexOfExistingIntersection: indexOfExistingIntersection,
-            addIntersection: addIntersection,
-            updateIntersection: updateIntersection,
-            initIntersectNeighbors: initIntersectNeighbors,
-            getIntersectNeighbors: getIntersectNeighbors,
-            initIntersectAdjHexes: initIntersectAdjHexes,
-            getIntersectAdjHexes: getIntersectAdjHexes
-        };
-    }
-
-    function AdjacencyList(neighbors) {
-
-        return {
-            addNeighbor: function(intersectionId) {
-
-                // e.g. At the start of a radial sweep, there is no "previous" intersection in the sweep
-                if (intersectionId !== undefined)
-                {
-                    // Don't add as neighbor if already present
-                    if (neighbors.indexOf(intersectionId) === -1)
-                    {
-                        neighbors.push(intersectionId);
-                    }
-                }
-            }
-        }
-    }
-
-    function RoadManager() {
 
         function whereContainsBothIds(road, id1, id2) {
         
@@ -380,7 +416,9 @@ app.Proxies = (function() {
             },
             getAllRoadProxies: function() {
                 return getAllRoads().map(x => GetRoadProxy(x));
-            }
+            },
+            addRoadMarker: addRoadMarker,
+            isRoadMarkerDrawn: isRoadMarkerDrawn
         };
     }
 
@@ -465,7 +503,8 @@ app.Proxies = (function() {
             getNeighborsFacing: getNeighborsFacing,
             occupyingPiece: roadCenter.attrs.occupyingPiece,
             isRoadOccupied: isRoadOccupied,
-            isRoadOccupiedByPlayer: isRoadOccupiedByPlayer
+            isRoadOccupiedByPlayer: isRoadOccupiedByPlayer,
+            hide: function() { roadCenter.hide() }
         };
     }
 

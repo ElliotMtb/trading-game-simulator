@@ -72,7 +72,7 @@ app.IntersectionBuilder = (function() {
         // Collision
         else
         {
-            _boardDataManager.updateIntersection(_gameBoardController, idGen, idOfCurrentHex, vertexX, vertexY, collisionIndex, lastIntersectionInSweep);
+            _boardDataManager.updateIntersection(_gameBoardController, idGen, idOfCurrentHex, collisionIndex, lastIntersectionInSweep);
 
             lastIntersectionInSweep = collisionIndex;
         }
