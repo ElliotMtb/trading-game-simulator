@@ -89,7 +89,8 @@ app.AiRudi = (function() {
     
             // Found a way to trigger Kinetic object event with 'fire'
             // https://stackoverflow.com/questions/11819556/using-kineticjs-is-a-way-of-trigger-events-like-jquery
-            app.vertices[randIntId].fire("click");
+            var vertex = app.Proxies.BoardVertices().getVertexProxy(randIntId);
+            vertex.fireClick();
     
             $(".city-btn").trigger("click");
         }
@@ -116,8 +117,9 @@ app.AiRudi = (function() {
     
             // Found a way to trigger Kinetic object event with 'fire'
             // https://stackoverflow.com/questions/11819556/using-kineticjs-is-a-way-of-trigger-events-like-jquery
-            app.vertices[randIntId].fire("click");
-    
+            var vertex = app.Proxies.BoardVertices().getVertexProxy(randIntId);
+            vertex.fireClick();
+
             $(".settlement-btn").trigger("click");
         }
     }

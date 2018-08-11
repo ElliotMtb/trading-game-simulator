@@ -77,8 +77,9 @@ app.GameBoardController = (function() {
 
     function Controller_ToggleIntersectSelectMode() {
         
-        toggleVisibilityForArray(app.vertices);
-        toggleVisibilityForArray(app.verticesText);
+        app.Proxies.BoardVertices().toggleVisibility();
+
+        app.kineticLayer.draw();
     }
 
 
@@ -205,8 +206,12 @@ app.GameBoardController = (function() {
 
     function Controller_BindIntersectClick(intersectionId) {
         
-        app.vertices[intersectionId].off('click');
-        app.vertices[intersectionId].on('click', function(e){
+        var vertex = app.Proxies.BoardVertices()
+            .getVertexProxy(intersectionId)
+            .getVertex();
+
+        vertex.off('click');
+        vertex.on('click', function(e){
 
             var intersectId = this.attrs.id;
             var intersectX = this.attrs.x;
@@ -539,25 +544,23 @@ app.GameBoardController = (function() {
 
     function toggleSelectedIntersection(id) {
 
-        if(app.vertices[id].getAttr('selected'))
+        var vertex = app.Proxies.BoardVertices().getVertexProxy(id);
+
+        if(vertex.isSelected())
         {
-            app.vertices[id].setStroke("black");
-            app.vertices[id].setStrokeWidth("1");
-            app.vertices[id].setAttr('selected', false);
+            vertex.deselect();
             selectedIntersection = "";
 
         }
         else
         {
-            app.vertices[id].setStroke("blue");
-            app.vertices[id].setStrokeWidth("3");
-            app.vertices[id].setAttr('selected', true);
+            vertex.selectAndHighlight();
 
             selectedIntersection = id;
         }
 
         app.kineticLayer.draw();
-        app.vertices[id].draw();
+        vertex.getVertex().draw();
     };
 
     function deselectHex(id) {
@@ -568,9 +571,10 @@ app.GameBoardController = (function() {
     };
 
     function deselectIntersection(id) {
-        app.vertices[id].setStroke("black");
-        app.vertices[id].setStrokeWidth("1");
-        app.vertices[id].setAttr('selected', false);
+
+        var vertex = app.Proxies.BoardVertices().getVertexProxy(id);
+        vertex.deselect();
+        
         selectedIntersection = "";
     };
 

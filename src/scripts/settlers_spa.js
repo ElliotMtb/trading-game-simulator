@@ -93,8 +93,7 @@ var app = (function() {
         app.hexNumbers = {};
         app.hexNumbersText = {};
 
-        app.vertices = [];
-        app.verticesText = [];
+        app.Proxies.BoardVertices().init();
 
         app.roads = [];
         app.roadCenterPoints = [];

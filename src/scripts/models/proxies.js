@@ -4,6 +4,11 @@ app.Proxies = (function() {
 
     function BoardVertices() {
 
+        function init() {
+            app.vertices = [];
+            app.verticesText = [];
+        }
+
         function getNewVertexCircle(intersectionId, vertexX, vertexY) {
 
             var vertex = new Kinetic.Circle({
@@ -61,10 +66,29 @@ app.Proxies = (function() {
             return app.vertices.map(x => new BoardVertexProxy(x));
         }
 
+        function toggleVisibility() {
+
+            vertices = getAllVertexProxies();
+
+            vertices.forEach(function(x) {
+
+                if (x.getVertex().isVisible())
+                {
+                    x.hide();
+                }
+                else
+                {
+                    x.show();
+                }
+            });
+        }
+
         return {
+            init: init,
             addVertex: addVertex,
             getVertexProxy: getVertexProxy,
-            getAllVertexProxies: getAllVertexProxies
+            getAllVertexProxies: getAllVertexProxies,
+            toggleVisibility: toggleVisibility
         };
     }
 
@@ -86,10 +110,52 @@ app.Proxies = (function() {
             return getIntersectNeighbors(getId());
         }
 
+        function highlightOnBoard() {
+
+            vertex.setStroke("yellow");
+            vertex.setStrokeWidth(3);
+        }
+
+        function fireClick() {
+            vertex.fire("click");
+        }
+
+        function select() {            
+            vertex.setStroke("black");
+            vertex.setStrokeWidth("1");
+            vertex.setAttr('selected', false);
+        }
+
+        function selectAndHighlight() {
+            vertex.setStroke("blue");
+            vertex.setStrokeWidth("3");
+            vertex.setAttr('selected', true);
+        }
+
+        function deselect() {
+            vertex.setStroke("black");
+            vertex.setStrokeWidth("1");
+            vertex.setAttr('selected', false);
+        }
+
+        function isSelected() {
+            return vertex.getAttr('selected');
+        }
+
         return {
+            fireClick: fireClick,
+            isSelected: isSelected,
+            select: select,
+            selectAndHighlight: selectAndHighlight,
+            highlightOnBoard: highlightOnBoard,
+            deselect: deselect,
             hide: function() {
                 vertex.hide();
                 vertexText.hide();
+            },
+            show: function() {
+                vertex.show();
+                vertexText.show();
             },
             getX: function() {
                 return vertex.attrs.x;

@@ -14,9 +14,9 @@ var IntersectionModel = (function() {
             },
             highlightOnBoard: function(){
             
-                app.vertices[this.id].setStroke("yellow");
-                app.vertices[this.id].setStrokeWidth(3);
-                app.vertices[this.id].draw();
+                var vertex = app.Proxies.BoardVertices().getVertexProxy(this.id);
+                vertex.highlightOnBoard();
+                vertex.getVertex().draw();
             },
             isOccupiedByPlayer: function(playerId) {
                 

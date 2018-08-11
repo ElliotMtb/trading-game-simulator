@@ -7,7 +7,7 @@ app.BoardBuilder = (function () {
 
     function GameBoardBuilder_AssembleBoard(kineticLayer) {
 
-        var radiusToFirstRing = app.GameBoardHexRadius*Math.sqrt(3);
+        var radiusToFirstRing = app.GameBoardHexRadius * Math.sqrt(3);
         var i;
         var initialHexId = 1;
         
