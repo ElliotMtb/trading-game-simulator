@@ -344,6 +344,32 @@ app.Proxies = (function() {
 
     function RoadManager() {
 
+        var initRoadCenters = function() {
+
+            app.roadCenterPoints = [];
+        };
+
+        var getAllRoadProxies = function() {
+            return getAllRoads().map(x => GetRoadProxy(x));
+        };
+
+        function toggleRoadsVisibility() {
+
+            roads = getAllRoadProxies();
+
+            roads.forEach(function(x) {
+
+                if (x.getRoad().isVisible())
+                {
+                    x.getRoad().hide();
+                }
+                else
+                {
+                    x.getRoad().show();
+                }
+            });
+        }
+
         var isRoadMarkerDrawn = function(intersect1, intersect2) {
         
             for (var i = 0; i < app.roadCenterPoints.length; i++)
@@ -487,11 +513,11 @@ app.Proxies = (function() {
                     .map(x => GetRoadProxy(x))
                     .filter(x => x.isRoadOccupiedByPlayer(playerId));
             },
-            getAllRoadProxies: function() {
-                return getAllRoads().map(x => GetRoadProxy(x));
-            },
+            getAllRoadProxies: getAllRoadProxies,
             addRoadMarker: addRoadMarker,
-            isRoadMarkerDrawn: isRoadMarkerDrawn
+            isRoadMarkerDrawn: isRoadMarkerDrawn,
+            initRoadCenters: initRoadCenters,
+            toggleRoadsVisibility: toggleRoadsVisibility
         };
     }
 
@@ -563,6 +589,10 @@ app.Proxies = (function() {
                 return true;
         }
 
+        function occupy(unitType, playerId) {
+            roadCenter.attrs.occupyingPiece = {"type": unitType, "playerId": playerId};
+        }
+
         return {
             id: roadCenter.attrs.id,
             intersectionIds: getBothSideIds(),
@@ -577,7 +607,10 @@ app.Proxies = (function() {
             occupyingPiece: roadCenter.attrs.occupyingPiece,
             isRoadOccupied: isRoadOccupied,
             isRoadOccupiedByPlayer: isRoadOccupiedByPlayer,
-            hide: function() { roadCenter.hide() }
+            hide: function() { roadCenter.hide() },
+            getRoad: function() { return roadCenter },
+            fireClick: function() { roadCenter.fire("click") },
+            occupy: occupy
         };
     }
 

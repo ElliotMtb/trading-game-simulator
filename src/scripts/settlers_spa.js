@@ -95,8 +95,7 @@ var app = (function() {
 
         app.Proxies.BoardVertices().init();
 
-        app.roads = [];
-        app.roadCenterPoints = [];
+        app.Proxies.RoadManager().initRoadCenters();
 
         app.intersectToHexesAdjacency = [];
         app.intersectToIntersectAdjacency = [];

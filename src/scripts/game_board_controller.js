@@ -85,7 +85,8 @@ app.GameBoardController = (function() {
 
     function Controller_ToggleRoadSelectMode() {
         
-        toggleVisibilityForArray(app.roadCenterPoints);
+        app.Proxies.RoadManager.toggleRoadsVisibility();
+        app.kineticLayer.draw();
     }
 
     function Controller_ToggleHexSelectMode() {
@@ -135,7 +136,9 @@ app.GameBoardController = (function() {
 
     function Controller_BindRoadCenterClick(roadCenterId) {
         
-        app.roadCenterPoints[roadCenterId].on('click', function(e){
+        var roadProxy = app.Proxies.RoadManager().getRoadProxy(roadCenterId);
+
+        roadProxy.getRoad().on('click', function(e){
             
             var playerProxy = app.gamePlayMachine.GetCurrentPlayer();
 
@@ -348,10 +351,10 @@ app.GameBoardController = (function() {
 
     function installRoadPlaceholder(playerId, unitType, centerId) {
         
-        var road = app.roadCenterPoints[centerId];
-        road.attrs.occupyingPiece = {"type": unitType, "playerId": playerId};
+        var roadProxy = app.Proxies.RoadManager().getRoadProxy(centerId);
+        roadProxy.occupy(unitType, playerId);
 
-        console.log("ROAD PIECE PLACED: " + JSON.stringify(road.attrs.id));
+        console.log("ROAD PIECE PLACED: " + JSON.stringify(roadProxy.id));
     }
 
     function installIntersectionPlaceholder(playerId, unitType, intersectId) {

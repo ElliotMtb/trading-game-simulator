@@ -128,7 +128,9 @@ app.AiRudi = (function() {
         
         var evaluator = app.Rules.GetValidator();
 
-        var allRoadProxies = app.Proxies.RoadManager().getAllRoadProxies();
+        var roadManager = app.Proxies.RoadManager();
+
+        var allRoadProxies = roadManager.getAllRoadProxies();
         var placeableRoads = allRoadProxies.filter(x => evaluator.isRoadPlaceable(playerProxy, "road", x));
     
         if (placeableRoads.length > 0) {
@@ -139,7 +141,7 @@ app.AiRudi = (function() {
             console.log("randomIndex to choose neighbor road: " + randomIndex);
 
             var randRoadId = placeableRoads[randomIndex].id;
-            app.roadCenterPoints[randRoadId].fire("click");
+            roadManager.getRoadProxy(randRoadId).fireClick()
         }
     }
 

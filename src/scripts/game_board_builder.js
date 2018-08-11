@@ -26,16 +26,11 @@ app.BoardBuilder = (function () {
             kineticLayer.add(x.getVertex());
             kineticLayer.add(x.getVertexText());
         });
-        
-        for (var r = 0; r < app.roads.length; r++)
-        {
-            kineticLayer.add(app.roads[r]);
-        }
-        
-        for (var c = 0; c < app.roadCenterPoints.length; c++)
-        {
-            kineticLayer.add(app.roadCenterPoints[c]);
-        }
+
+        var roadProxies = app.Proxies.RoadManager().getAllRoadProxies();
+        roadProxies.map(
+            x => kineticLayer.add(x.getRoad())
+        );
     }
 
     var placeNextHex = function(hexId, radiusToRing, angle, kineticLayer) {

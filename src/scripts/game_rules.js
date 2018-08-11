@@ -135,7 +135,7 @@ app.Rules = (function() {
             // Second (if first condition not true) - Does either intersect neighbor have 1 or more 'friendly' adjecent roads (ONLY IF neighbor not occupied by other player)
             //      Fetch adjacent roads (for neighbor vertex/intersection):
             //          For each external intersection neighbor (non-self neighbor):
-            //              Adjacent road segment = app.roadCenterPoints where 'intersectionIds' contains BOTH current intersectionId AND neighbor id of interest
+            //              Adjacent road segment = roadCenters where 'intersectionIds' contains BOTH current intersectionId AND neighbor id of interest
             //
             //      Amongst all fetched road segments, if 1 or more is occupied by the player, then return true
 
