@@ -39,7 +39,7 @@ app.Proxies = (function() {
             return vertexText;
         }
 
-        function addVertex(intersectionId, vertexX, vertexY) {
+        function addVertex(intersectionId, lastIntersectionInSweep, idOfCurrentHex, vertexX, vertexY) {
 
             var vertex = getNewVertexCircle(intersectionId, vertexX, vertexY);
             app.vertices[intersectionId] = vertex;
@@ -52,6 +52,13 @@ app.Proxies = (function() {
             // Create the Backbone model
             app.hexIntersectList.create({'id':intersectionId,'x':vertexX,'y':vertexY, 'occupyingPiece': ''});
 
+            var neighborHexes = vertexProxy.initIntersectAdjHexes();
+            neighborHexes.addNeighbor(idOfCurrentHex);
+
+            vertexProxy.initIntersectNeighbors();
+            vertexProxy.addNeighborIntersection(intersectionId);
+            vertexProxy.addNeighborIntersection(lastIntersectionInSweep);
+            
             return vertexProxy;
         }
 
@@ -88,7 +95,8 @@ app.Proxies = (function() {
             addVertex: addVertex,
             getVertexProxy: getVertexProxy,
             getAllVertexProxies: getAllVertexProxies,
-            toggleVisibility: toggleVisibility
+            toggleVisibility: toggleVisibility,
+            getVertexProxy: getVertexProxy
         };
     }
 
@@ -100,14 +108,23 @@ app.Proxies = (function() {
             return vertex.attrs.id;
         }
 
-        function getIntersectNeighbors(intersectionId) {
-            return new AdjacencyList(app.intersectToIntersectAdjacency[intersectionId]);
+        function getIntersectNeighbors() {
+            return new AdjacencyList(app.intersectToIntersectAdjacency[getId()]);
+        }
+
+        function getNeighboringHexes() {
+            return new AdjacencyList(app.intersectToHexesAdjacency[getId()]);
         }
 
         // Intersection-to-Intersection Neighbors
         function initIntersectNeighbors() {
             app.intersectToIntersectAdjacency[getId()] = [];
             return getIntersectNeighbors(getId());
+        }
+
+        function initIntersectAdjHexes() {
+            app.intersectToHexesAdjacency[getId()] = [];
+            return getNeighboringHexes(getId());
         }
 
         function highlightOnBoard() {
@@ -175,7 +192,10 @@ app.Proxies = (function() {
             getVertexText: function() {
                 return vertexText;
             },
-            initIntersectNeighbors: initIntersectNeighbors
+            initIntersectNeighbors: initIntersectNeighbors,
+            initIntersectAdjHexes: initIntersectAdjHexes,
+            getIntersectNeighbors: getIntersectNeighbors,
+            getNeighboringHexes: getNeighboringHexes
         };
     }
 
@@ -188,18 +208,9 @@ app.Proxies = (function() {
             Assumes a radial sweep is happening
         */
         function addIntersection(newInterId, idOfCurrentHex, vertexX, vertexY, lastIntersectionInSweep) {
-            
-            var intersectionId = newInterId;
         
-            var newVertex = _verticesManager.addVertex(intersectionId, vertexX, vertexY);
+            var newVertex = _verticesManager.addVertex(newInterId, lastIntersectionInSweep, idOfCurrentHex, vertexX, vertexY);
             
-            var neighborHexes = initIntersectAdjHexes(intersectionId);
-            neighborHexes.addNeighbor(idOfCurrentHex);
-            
-            newVertex.initIntersectNeighbors();
-            newVertex.addNeighborIntersection(intersectionId);
-            newVertex.addNeighborIntersection(lastIntersectionInSweep);
-
             newVertex.hide();
         }
 
@@ -211,9 +222,9 @@ app.Proxies = (function() {
             var collisionVertex = _verticesManager.getVertexProxy(collisionIndex);
 
             // TODO: This can be encapsulated inside VertexProxy
-            var neighborHexes = getIntersectAdjHexes(collisionIndex);
+            var neighborHexes = collisionVertex.getNeighboringHexes();
             neighborHexes.addNeighbor(idOfCurrentHex);
-            
+
             if (lastIntersectionInSweep !== undefined)
             {
                 collisionVertex.addNeighborIntersection(lastIntersectionInSweep);
@@ -291,12 +302,16 @@ app.Proxies = (function() {
 
         // Intersection-to-Hex Neighbors/adjacency
         function initIntersectAdjHexes(intersectionId) {
-            app.intersectToHexesAdjacency[intersectionId] = [];
-            return getIntersectAdjHexes(intersectionId);
+
         }
 
         function getIntersectAdjHexes(intersectionId) {
             return getNewAdjacencyList(app.intersectToHexesAdjacency[intersectionId]);
+        }
+
+        function initIntersectAdjacencies() {
+            app.intersectToHexesAdjacency = [];
+            app.intersectToIntersectAdjacency = [];
         }
 
         function getHexVertexCoords(centerX, centerY, hexRadius, radialIndex) {
@@ -320,7 +335,8 @@ app.Proxies = (function() {
             addIntersection: addIntersection,
             updateIntersection: updateIntersection,
             initIntersectAdjHexes: initIntersectAdjHexes,
-            getIntersectAdjHexes: getIntersectAdjHexes
+            getIntersectAdjHexes: getIntersectAdjHexes,
+            initIntersectAdjacencies: initIntersectAdjacencies
         };
     }
 
@@ -338,7 +354,8 @@ app.Proxies = (function() {
                         neighbors.push(intersectionId);
                     }
                 }
-            }
+            },
+            toArray: function() { return neighbors }
         }
     }
 

@@ -97,8 +97,7 @@ var app = (function() {
 
         app.Proxies.RoadManager().initRoadCenters();
 
-        app.intersectToHexesAdjacency = [];
-        app.intersectToIntersectAdjacency = [];
+        app.Proxies.BoardDataManager().initIntersectAdjacencies();
 
         app.gamePhases = [];
         app.turns = [];

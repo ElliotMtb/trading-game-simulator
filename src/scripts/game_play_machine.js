@@ -273,11 +273,7 @@ app.GamePlay = (function() {
     function GamePlayMachine_OnDieRoll() {
 
         // Distribute resources to all players
-        //    Utilizing
-        //      app.hexintersectlist ....model getOccupyingPiece()
-        //      app.intersectToHexesAdjacency
-        //      playerProxy.addResource(type)
-
+        
         // Foreach hex where number piece = this.getCurrentDieRoll() AND hex has 1 or more occupied vertices
         //      Foreach occupied intersection (whether city or settlement)
         //          Qty to distribute = 2 if occupyingPiece.type = 'city' else 1

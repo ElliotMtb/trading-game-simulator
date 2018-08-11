@@ -303,8 +303,8 @@ app.GameBoardController = (function() {
             }
 
             $("#selectedIntersect").html("Selected Intersection: <br> Id: " + intersectId + "<br>" +
-                "Adjacent Hexes: " + app.intersectToHexesAdjacency[intersectionId] + "<br>" +
-                "Adjacent Intersections: " + app.intersectToIntersectAdjacency[intersectionId] + "<br>");
+                "Adjacent Hexes: " + app.Proxies.BoardVertices().getVertexProxy(intersectionId).getNeighboringHexes().toArray() + "<br>" +
+                "Adjacent Intersections: " + app.Proxies.BoardVertices().getVertexProxy(intersectionId).getIntersectNeighbors().toArray() + "<br>");
             
             $("#selectedIntersect").append(settlement, city);
         
