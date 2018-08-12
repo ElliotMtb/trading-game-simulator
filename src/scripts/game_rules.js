@@ -164,24 +164,25 @@ app.Rules = (function() {
                 var roadProxy;
 
                 console.log("NeighborIntId: " + roadNeighborIntersectId)
-                var neighborAdjList = app.intersectToIntersectAdjacency[roadNeighborIntersectId];
+
+                var vertexProxy = app.Proxies.BoardVertices().getVertexProxy(roadNeighborIntersectId);
+                var neighborAdjList = vertexProxy.getIntersectNeighbors().toArray();
 
                 console.log("Neighbor adjacency list: " + neighborAdjList);
 
                 var adjacentRoadSegments = [];
 
-                var i = 0;
-                for (i = 0; i < neighborAdjList.length; i++) {
+                neighborAdjList.forEach(function(x) {
 
-                    if (neighborAdjList[i] !== roadNeighborIntersectId) {
+                    if (x !== roadNeighborIntersectId) {
 
-                        roadProxy = app.Proxies.RoadManager().getRoadProxyBetweenSideNodes(roadNeighborIntersectId, neighborAdjList[i]);
+                        roadProxy = app.Proxies.RoadManager().getRoadProxyBetweenSideNodes(roadNeighborIntersectId, x);
 
                         console.log("Road segment: " + JSON.stringify(roadProxy.keyRoadData));
 
                         adjacentRoadSegments.push(roadProxy);
                     }
-                }
+                });
 
                 console.log("Adjacent road segments: " + JSON.stringify(adjacentRoadSegments.map(x => x.keyRoadData)));
 
@@ -205,7 +206,9 @@ app.Rules = (function() {
         */
         function isSettlementTwoAway(intersectId) {
 
-            var neighborInfo = app.intersectToIntersectAdjacency[intersectId];
+            var vertexProxy = app.Proxies.BoardVertices().getVertexProxy(intersectId);
+            var neighborInfo = vertexProxy.getIntersectNeighbors().toArray();
+
             console.log("Neighbor ids: " + neighborInfo);
 
             var i = 0;
@@ -221,14 +224,11 @@ app.Rules = (function() {
                     return false;
                 }
             }
-
+            
             return true;
         }
 
         function isSettlementContiguousForPlayer(playerProxy, intersectId) {
-
-            // Intersection must have neighboring owned roads (i.e. neighboring center points occupied with road owned by same player)
-            app.intersectToIntersectAdjacency[intersectId];
 
             // Neighboring center points where
             var neighborRoadProxies = app.Proxies.RoadManager().getNeighboringRoadProxies(intersectId);

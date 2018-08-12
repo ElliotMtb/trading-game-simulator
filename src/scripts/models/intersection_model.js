@@ -55,26 +55,6 @@ var IntersectionModel = (function() {
             },
             alertAdjacencies: function() {
             
-                var adjacentHexes = app.intersectToHexesAdjacency[this.id];
-                
-                var stringListOfHexes = "";
-                
-                for(var i=0; i<adjacentHexes.length; i++)
-                {
-                    stringListOfHexes+= (adjacentHexes[i] + ",");
-                }
-                
-                var stringAdjacentIntersects = "";
-                
-                var adjancentIntersections = app.intersectToIntersectAdjacency[this.id];
-                
-                for (var i=0; i < adjancentIntersections.length; i++)
-                {
-                    stringAdjacentIntersects+= (adjancentIntersections[i] + ",");
-                }
-                
-                //alert("adjacent to hex #: " + stringListOfHexes + " adjacent to intersections: " + stringAdjacentIntersects);
-                
             }
         });
     };
