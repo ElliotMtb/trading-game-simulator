@@ -360,10 +360,10 @@ app.GameBoardController = (function() {
     function installIntersectionPlaceholder(playerId, unitType, intersectId) {
 
         // Lookup intersect model and mark it as occupied by the game piece
-        var intersect = app.hexIntersectList.get(intersectId);
-        intersect.setOccupyingPiece({"type": unitType, "playerId": playerId});
+        var intersect = app.Proxies.BoardVertices().getVertexProxy(intersectId);
+        intersect.setOccupyingPiece(unitType, playerId);
         
-        console.log("INTERSECTION PIECE PLACED: " + JSON.stringify(app.hexIntersectList.get(intersectId)));
+        console.log("INTERSECTION PIECE PLACED: " + JSON.stringify(intersect.getVertexModel()));
     }
 
     function Controller_OnStartGame() {

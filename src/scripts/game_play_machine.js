@@ -303,7 +303,7 @@ app.GamePlay = (function() {
         disburseType = app.ring[rolledHexId].getAttr('hexType');
         console.log("Disbursement data: " + disburseType);
 
-        var playerDispursements = getPlayerDispursements(rolledHexId);
+        var playerDispursements = app.Proxies.BoardVertices().getPlayerDispursements(rolledHexId);
         
         var i;
         for (i = 0; i < playerDispursements.length; i++) {
@@ -317,66 +317,6 @@ app.GamePlay = (function() {
         var qty = playerDispursement.quantity;
 
         playerProxy.addMultipleResources(disburseType, qty);
-    }
-
-    function getPlayerDispursements(hexId) {
-
-        var occupiedIntersections = app.hexIntersectList.filter(x => isIntersectOccupiedAndTouchingHex(x, hexId));
-        console.log("Occupied relevant intersections: " + JSON.stringify(occupiedIntersections));
-
-        return occupiedIntersections.map(x => getDispurseData(x));
-    }
-
-    function getDispurseData(intersect) {
-
-        var disburseQty = 0;
-
-        piece = intersect.getOccupyingPiece();
-        console.log("Occupied intersection " + i + " :" + JSON.stringify(piece));
-
-        // Lookup occupying piece owner (player)
-        playerProxy = app.Proxies.GetPlayerProxyById(piece.playerId);
-        
-        // Apply disbursement
-        if (piece.type === 'city') {
-
-            disburseQty = 2;
-        }
-        else if (piece.type === 'settlement') {
-
-            disburseQty = 1;
-        }
-        else {
-            throw "Error. Unexpected piece occupying intersection. Disbursement quantity cannot be determined";
-        }
-
-        return { "playerProxy" : playerProxy, "quantity" : disburseQty };
-    }
-
-    function isIntersectOccupiedAndTouchingHex(intersect, hexId) {
-
-        if (intersect.isOccupied()) {
-
-            console.log("Checking if occupied intersect is touching relevant hex...");
-
-            var intersectId = intersect.get('id');
-
-            var hexesTouching = app.intersectToHexesAdjacency[intersectId];
-
-            // console.log("Intersect id: " + intersectId);
-            // console.log("Hexes touching: " + JSON.stringify(hexesTouching));
-            // console.log("typeof(Hexes touching): " + JSON.stringify(typeof(Object.keys(hexesTouching).map(x => hexesTouching[x]))));
-            // console.log("typeof(each Hexes touching): " + JSON.stringify(hexesTouching.map(x => typeof(x))));
-            // console.log("Target hexId: " + hexId);
-            // console.log("typeof(target hexId): " + typeof(hexId));
-
-            if (hexesTouching.indexOf(parseInt(hexId)) > -1) {
-                console.log("Occupied intersect is touching target hex!");
-                return true;
-            }
-        }
-        
-        return false;
     }
 
     GamePlayMachine.prototype.Start = GamePlayMachine_Start;

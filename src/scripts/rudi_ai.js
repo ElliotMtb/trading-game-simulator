@@ -70,7 +70,6 @@ app.AiRudi = (function() {
     function aIPlaceCity(playerProxy) {
 
         // get all unoccupied nodes that are 2-away (eligible/free)
-        //var unoccupied = app.hexIntersectList.filter(x => !x.isOccupied())
         var intersectIds = app.hexIntersectList.map(x => x.get('id'));
         var evaluator = app.Rules.GetValidator();
 
@@ -99,7 +98,6 @@ app.AiRudi = (function() {
     function aIPlaceSettlement(playerProxy) {
 
         // get all unoccupied nodes that are 2-away (eligible/free)
-        //var unoccupied = app.hexIntersectList.filter(x => !x.isOccupied())
         var intersectIds = app.hexIntersectList.map(x => x.get('id'));
         var evaluator = app.Rules.GetValidator();
 

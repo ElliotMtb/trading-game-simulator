@@ -9,6 +9,22 @@ app.Proxies = (function() {
             app.verticesText = [];
         }
 
+        function getOccupiedAndTouchingHex(hexId) {
+
+            var proxies = getAllVertexProxies().filter(x => x.isOccupiedAndTouchingHex(hexId));
+
+            console.log("Occupied relevant intersections: " + JSON.stringify(proxies.map(x => x.getVertexModel())));
+
+            return proxies;
+        }
+
+        function getPlayerDispursements(hexId) {
+
+            var occupiedAndTouchingHex = getOccupiedAndTouchingHex(hexId);
+
+            return occupiedAndTouchingHex.map(x => x.getDispurseData());
+        }
+
         function getNewVertexCircle(intersectionId, vertexX, vertexY) {
 
             var vertex = new Kinetic.Circle({
@@ -96,6 +112,8 @@ app.Proxies = (function() {
             getVertexProxy: getVertexProxy,
             getAllVertexProxies: getAllVertexProxies,
             toggleVisibility: toggleVisibility,
+            getOccupiedAndTouchingHex: getOccupiedAndTouchingHex,
+            getPlayerDispursements: getPlayerDispursements,
             getVertexProxy: getVertexProxy
         };
     }
@@ -106,6 +124,32 @@ app.Proxies = (function() {
 
         function getId() {
             return vertex.attrs.id;
+        }
+
+        function getDispurseData() {
+
+            var disburseQty = 0;
+    
+            piece = getVertexModel().getOccupyingPiece();
+            console.log("Occupied intersection " + i + " :" + JSON.stringify(piece));
+    
+            // Lookup occupying piece owner (player)
+            playerProxy = app.Proxies.GetPlayerProxyById(piece.playerId);
+            
+            // Apply disbursement
+            if (piece.type === 'city') {
+    
+                disburseQty = 2;
+            }
+            else if (piece.type === 'settlement') {
+    
+                disburseQty = 1;
+            }
+            else {
+                throw "Error. Unexpected piece occupying intersection. Disbursement quantity cannot be determined";
+            }
+    
+            return { "playerProxy" : playerProxy, "quantity" : disburseQty };
         }
 
         function getIntersectNeighbors() {
@@ -159,7 +203,44 @@ app.Proxies = (function() {
             return vertex.getAttr('selected');
         }
 
+        function setOccupyingPiece(unitType, playerId) {
+            var vertexModel = getVertexModel();
+            vertexModel.setOccupyingPiece({"type": unitType, "playerId": playerId});
+        }
+
+        function getVertexModel() {
+            return app.hexIntersectList.get(getId());
+        }
+
+        function isOccupiedAndTouchingHex(hexId) {
+
+            if (getVertexModel().isOccupied()) {
+    
+                console.log("Checking if occupied intersect is touching relevant hex...");
+    
+                var hexesTouching = getNeighboringHexes().toArray();
+    
+                // console.log("Intersect id: " + intersectId);
+                // console.log("Hexes touching: " + JSON.stringify(hexesTouching));
+                // console.log("typeof(Hexes touching): " + JSON.stringify(typeof(Object.keys(hexesTouching).map(x => hexesTouching[x]))));
+                // console.log("typeof(each Hexes touching): " + JSON.stringify(hexesTouching.map(x => typeof(x))));
+                // console.log("Target hexId: " + hexId);
+                // console.log("typeof(target hexId): " + typeof(hexId));
+    
+                if (hexesTouching.indexOf(parseInt(hexId)) > -1) {
+                    console.log("Occupied intersect is touching target hex!");
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
         return {
+            getDispurseData: getDispurseData,
+            isOccupiedAndTouchingHex, isOccupiedAndTouchingHex,
+            getVertexModel: getVertexModel,
+            setOccupyingPiece: setOccupyingPiece,
             fireClick: fireClick,
             isSelected: isSelected,
             select: select,
