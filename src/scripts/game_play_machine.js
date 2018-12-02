@@ -137,6 +137,7 @@ app.GamePlay = (function() {
         this.currentGamePhase = null;
         this.currentTurnPhase = null;
         this.currentTurnPlayer = null;
+        this.turnCount = 0;
         
         // Initial length 4 so that players need 5 to claim
         var longestRoad = { 
@@ -185,6 +186,11 @@ app.GamePlay = (function() {
     function GamePlayMachine_GetCurrentPlayer() {
 
         return app.Proxies.GetPlayerProxy(this.currentTurnPlayer.data);
+    }
+
+    function GamePlayMachine_GetTurnCount() {
+        
+        return this.turnCount;
     }
 
     function GamePlayMachine_Start() {
@@ -268,6 +274,8 @@ app.GamePlay = (function() {
         this.currentTurnPhase = null;
 
         this.NextTurnPhase();
+
+        this.turnCount++;
     }
 
     function GamePlayMachine_OnDieRoll() {
@@ -324,6 +332,7 @@ app.GamePlay = (function() {
     GamePlayMachine.prototype.NextTurn = GamePlayMachine_NextTurn;
     GamePlayMachine.prototype.NextGamePhase = GamePlayMachine_NextGamePhase;
     GamePlayMachine.prototype.GetCurrentPlayer = GamePlayMachine_GetCurrentPlayer;
+    GamePlayMachine.prototype.GetTurnCount = GamePlayMachine_GetTurnCount;
     GamePlayMachine.prototype.OnDieRoll = GamePlayMachine_OnDieRoll;
 
     return {

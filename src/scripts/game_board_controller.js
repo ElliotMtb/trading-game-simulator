@@ -345,7 +345,9 @@ app.GameBoardController = (function() {
     function checkForVictory(playerProxy) {
 
         if (playerProxy.points >= 13) {
-            throw "Player wins! name: " + playerProxy.name + " points: " + playerProxy.points;
+            var turns = app.gamePlayMachine.GetTurnCount();
+
+            throw "Player wins after " + turns + " total turns! name: " + playerProxy.name + " points: " + playerProxy.points;
         }
     }
 
@@ -391,7 +393,15 @@ app.GameBoardController = (function() {
             app.gamePlayMachine.NextGamePhase();
 
             // Play x number of turns or until someone wins
-            aIPlayGame(200);
+            try
+            {
+                aIPlayGame(200);
+            }
+            catch (e) {
+
+                app.controlPanelController.OnWin(e);
+                throw e;
+            }
 
         }
     }
@@ -410,20 +420,14 @@ app.GameBoardController = (function() {
         var playerProxy;
 
         var aiType = app.AiResourceHoming;
+        // aiType = app.AiRudi;
 
         var i;
         for (i = 0; i < (numPlayers * 2) - 1; i++) {
 
             playerProxy = app.gamePlayMachine.GetCurrentPlayer();
-
-            // Every other turn number, the player picks per priority
-            // if ((i + 1) % 2 === 0) {
-
-                // app.AiRudi.aITakePlacementTurn(playerProxy);
-            // }
-            // else {
-                aiType.aITakePlacementTurn(playerProxy);
-            // }
+    
+            aiType.aITakePlacementTurn(playerProxy);
 
             $("#endTurn").trigger("click");
         }

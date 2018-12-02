@@ -15,6 +15,13 @@ app.ControlPanelController = (function() {
         }
     }
 
+    function Controller_OnWin(message) {
+
+        var spaShellFoot = $(".spa-shell-foot");
+
+        spaShellFoot.prepend($("<strong>", {html: message}));
+    }
+
     function Controller_OnActivePlayerChange(playerProxy) {
 
         this.setCurrentPlayer(playerProxy);
@@ -65,6 +72,7 @@ app.ControlPanelController = (function() {
     }
 
     Controller.prototype.OnActivePlayerChange = Controller_OnActivePlayerChange;
+    Controller.prototype.OnWin = Controller_OnWin;
     Controller.prototype.Refresh = Controller_Refresh;
     
     return {
