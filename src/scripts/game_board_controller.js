@@ -391,7 +391,7 @@ app.GameBoardController = (function() {
             app.gamePlayMachine.NextGamePhase();
 
             // Play x number of turns or until someone wins
-            //aIPlayGame(200);
+            aIPlayGame(200);
 
         }
     }
