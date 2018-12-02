@@ -391,7 +391,7 @@ app.GameBoardController = (function() {
             app.gamePlayMachine.NextGamePhase();
 
             // Play x number of turns or until someone wins
-            aIPlayGame(200);
+            //aIPlayGame(200);
 
         }
     }
@@ -409,26 +409,28 @@ app.GameBoardController = (function() {
 
         var playerProxy;
 
+        var aiType = app.AiResourceHoming;
+
         var i;
         for (i = 0; i < (numPlayers * 2) - 1; i++) {
 
             playerProxy = app.gamePlayMachine.GetCurrentPlayer();
 
             // Every other turn number, the player picks per priority
-            if ((i + 1) % 2 === 0) {
+            // if ((i + 1) % 2 === 0) {
 
-                app.AiRudi.aITakePlacementTurn(playerProxy);
-            }
-            else {
-                app.AiResourceHoming.aITakePlacementTurn(playerProxy);
-            }
+                // app.AiRudi.aITakePlacementTurn(playerProxy);
+            // }
+            // else {
+                aiType.aITakePlacementTurn(playerProxy);
+            // }
 
             $("#endTurn").trigger("click");
         }
 
         // last time not calling end turn, because next game phase will take care of it after this
         playerProxy = app.gamePlayMachine.GetCurrentPlayer();
-        app.AiRudi.aITakePlacementTurn(playerProxy);
+        aiType.aITakePlacementTurn(playerProxy);
     }
 
     function aIPlayGame(numTurns) {

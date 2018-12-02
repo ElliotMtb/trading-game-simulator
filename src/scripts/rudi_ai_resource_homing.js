@@ -101,7 +101,7 @@ app.AiResourceHoming = (function() {
 
         return eligible
             .filter(x => vertManager.getVertexProxy(x).getNeighboringHexes().toArray()
-                .some(y => app.ring[y].getAttr('hexType') === hexType)
+                .some(y => app.ring[y].getAttr('hexType') === hexType) === true
             );
     }
 
@@ -120,10 +120,13 @@ app.AiResourceHoming = (function() {
         var i;
         for (i = 0; i < priority.length; i++)
         {
-            ofInterest = intersectionsOfInterest(eligible, priority[i]);
+            var target = priority[i];
+            ofInterest = intersectionsOfInterest(eligible,target);
 
-            if (ofInterest.length < 0)
+            if (ofInterest.length > 0)
+            {
                 break;
+            }
         }
 
         eligible = ofInterest;
