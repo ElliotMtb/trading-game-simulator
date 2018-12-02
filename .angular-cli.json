@@ -40,6 +40,7 @@
           "babel-xformed-scripts/views/player_view.js",
           "babel-xformed-scripts/views/setup_view.js",
           "babel-xformed-scripts/rudi_ai.js",
+          "babel-xformed-scripts/rudi_ai_resource_homing.js",
           "babel-xformed-scripts/router.js",
           "babel-xformed-scripts/pieces-builder.js",
           "babel-xformed-scripts/game_board_controller.js",

@@ -413,7 +413,16 @@ app.GameBoardController = (function() {
         for (i = 0; i < (numPlayers * 2) - 1; i++) {
 
             playerProxy = app.gamePlayMachine.GetCurrentPlayer();
-            app.AiRudi.aITakePlacementTurn(playerProxy);
+
+            // Every other turn number, the player picks per priority
+            if ((i + 1) % 2 === 0) {
+
+                app.AiRudi.aITakePlacementTurn(playerProxy);
+            }
+            else {
+                app.AiResourceHoming.aITakePlacementTurn(playerProxy);
+            }
+
             $("#endTurn").trigger("click");
         }
 
