@@ -46,6 +46,9 @@ app.Player = Backbone.Model.extend({
         // view when the model changes.
         this.save({'color': color});
     },
+    setAiType: function(ai) {
+        this.save({'aiType': ai});
+    },
     addPurchase: function(type) {
 
         var unitTypes = ["settlement", "city", "road"];

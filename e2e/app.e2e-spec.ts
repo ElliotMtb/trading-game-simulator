@@ -39,11 +39,11 @@ describe('settlers-app App', () => {
     page.navigateTo();
 
     // Tried to paramaterize these calls in a loop, but didn't work
-    page.setPlayerNameInput('michael');
+    page.setPlayerNameInput('pam');
     page.playerNameInputPressEnter();
     page.setPlayerColor(1, 'red');
 
-    page.setPlayerNameInput('dwight');
+    page.setPlayerNameInput('angela');
     page.playerNameInputPressEnter();
     page.setPlayerColor(2, 'blue');
 
@@ -62,15 +62,15 @@ describe('settlers-app App', () => {
     page.navigateTo();
 
     // Tried to paramaterize these calls in a loop, but didn't work
-    page.setPlayerNameInput('michael');
+    page.setPlayerNameInput('kevin');
     page.playerNameInputPressEnter();
     page.setPlayerColor(1, 'red');
 
-    page.setPlayerNameInput('dwight');
+    page.setPlayerNameInput('oscar');
     page.playerNameInputPressEnter();
     page.setPlayerColor(2, 'blue');
 
-    page.setPlayerNameInput('jim');
+    page.setPlayerNameInput('creed');
     page.playerNameInputPressEnter();
     page.setPlayerColor(3, 'green');
 

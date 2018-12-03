@@ -739,6 +739,10 @@ app.Proxies = (function() {
             points: playerModel.get("point"),
             purchasedItems: playerModel.get("purchasedItems"),
             resources: playerModel.get("resources"),
+            aiType: playerModel.get("aiType"),
+            setAiType: function(ai) {
+                playerModel.setAiType(ai);
+            },
             deployUnit: function(type) {
 
                 playerModel.deployPurchase(type);

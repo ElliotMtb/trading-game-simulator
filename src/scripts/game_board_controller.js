@@ -388,6 +388,20 @@ app.GameBoardController = (function() {
             // AI play
             var numPlayers = app.playerList.length;
 
+            // TODO: Until have a better way to set up AI players
+            var x;
+            for (x = 0; x < app.playerList.models.length; x++)
+            {
+                if (x == 0)
+                {
+                    app.playerList.models[x].setAiType('homing');
+                }
+                else
+                {
+                    app.playerList.models[x].setAiType('rudi');
+                }
+            }
+
             aIsetup(numPlayers);
 
             app.gamePlayMachine.NextGamePhase();
@@ -399,6 +413,9 @@ app.GameBoardController = (function() {
             }
             catch (e) {
 
+                // Log win message
+                console.log(e);
+                // Show "win" message in control panel
                 app.controlPanelController.OnWin(e);
                 throw e;
             }
@@ -419,14 +436,15 @@ app.GameBoardController = (function() {
 
         var playerProxy;
 
-        var aiType = app.AiResourceHoming;
-        // aiType = app.AiRudi;
+        var aiType = null;
 
         var i;
         for (i = 0; i < (numPlayers * 2) - 1; i++) {
 
             playerProxy = app.gamePlayMachine.GetCurrentPlayer();
     
+            aiType = getActiveAi(playerProxy);
+
             aiType.aITakePlacementTurn(playerProxy);
 
             $("#endTurn").trigger("click");
@@ -434,7 +452,27 @@ app.GameBoardController = (function() {
 
         // last time not calling end turn, because next game phase will take care of it after this
         playerProxy = app.gamePlayMachine.GetCurrentPlayer();
+
+        aiType = getActiveAi(playerProxy);
         aiType.aITakePlacementTurn(playerProxy);
+    }
+
+    function getActiveAi(playerProxy) {
+
+        var aiType = null;
+
+        if (playerProxy.aiType === "homing"){
+
+            aiType = app.AiResourceHoming;
+        }
+        else if (playerProxy.aiType === "rudi"){
+            aiType = app.AiRudi;
+        }
+        else {
+            throw "Unknown ai type";
+        }
+
+        return aiType;
     }
 
     function aIPlayGame(numTurns) {
