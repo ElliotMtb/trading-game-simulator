@@ -9,6 +9,10 @@ export class SettlersAppPage {
     element(by.css('a[href="#/begin"')).click();
   }
 
+  checkForWinner() {
+   return element(by.css('.spa-shell-foot strong')).getText();
+  }
+
   setPlayerColor(playerNum, color) {
     element.all(by.css('.selectColor[value=' + color + ']')).get(playerNum - 1).click();
   }

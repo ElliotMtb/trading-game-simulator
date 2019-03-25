@@ -1,5 +1,5 @@
 import { SettlersAppPage } from './app.po';
-import { browser } from 'protractor';
+import { browser, element, by } from 'protractor';
 
 // http://blog.ng-book.com/taking-screenshots-with-protractor/
 // at the top of the test spec:
@@ -85,11 +85,17 @@ describe('settlers-app App', () => {
 
   });
 
-  var testParams = [0,1,2,3,4,5,6,7,8,9,10];
+  var testParams = [];
+  var index = 0;
+  for (index = 0; index < 1000; index++)
+  {
+    testParams.push(index);
+  }
 
   testParams.map(function(testSpec) {
-
+    
     it('should play 4 player game', () => {
+
 
       page.navigateTo();
 
@@ -113,10 +119,21 @@ describe('settlers-app App', () => {
       // can't get this to work. perhaps I'm not attaching to the right method
       //expect(function () {page.clickBeginGame()}).toThrow();
       
+      var winner = 'unknown';
+
       page.clickBeginGame();
 
+      var winnerText = page.checkForWinner();
+
+      winnerText.then(function(text){
+          if (text.includes('Player wins')){
+            var pat = /color: (.*) name: (.*) points/
+            winner = text.match(pat)[1] + '_' + text.match(pat)[2];
+        }
+      });
+
       browser.takeScreenshot().then(function (png) {
-          writeScreenShot(png, '4players');
+          writeScreenShot(png, '4players' + '_' + winner);
       });
   
     });

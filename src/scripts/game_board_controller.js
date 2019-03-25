@@ -347,7 +347,8 @@ app.GameBoardController = (function() {
         if (playerProxy.points >= 13) {
             var turns = app.gamePlayMachine.GetTurnCount();
 
-            throw "Player wins after " + turns + " total turns! name: " + playerProxy.name + " points: " + playerProxy.points;
+            var playerColor = playerProxy.color;
+            throw "Player wins after " + turns + " total turns! color: " + playerColor + " name: " + playerProxy.name + " points: " + playerProxy.points;
         }
     }
 
@@ -429,7 +430,7 @@ app.GameBoardController = (function() {
     Controller.prototype.ToggleHexSelectMode 		= Controller_ToggleHexSelectMode;
     Controller.prototype.BindRoadCenterClick 		= Controller_BindRoadCenterClick;
     Controller.prototype.BindIntersectClick			= Controller_BindIntersectClick;
-
+    
     Controller.prototype.OnStartGame				= Controller_OnStartGame;
 
     function aIsetup(numPlayers) {
