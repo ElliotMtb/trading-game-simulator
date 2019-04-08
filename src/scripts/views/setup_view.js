@@ -1,6 +1,6 @@
 var SetupView = (function() {
 
-    var initView = function() {
+    var initView = function(isMinimalViewMode) {
         
         // renders the full list of todo items calling TodoView for each one.
         
@@ -17,7 +17,7 @@ var SetupView = (function() {
             
             app.hexIntersectList.on('showIntersections', this.addAllIntersections, this);
 
-            ViewInitializer.init(kineticLayer, practiceHex);
+            ViewInitializer.init(kineticLayer, practiceHex, isMinimalViewMode);
         };
         
         var getNewGameMachine = function() {
@@ -71,7 +71,8 @@ var SetupView = (function() {
                         break;
                     case 'begin':
                         getNewGameMachine();
-                        app.gameBoardController.OnStartGame();
+                        // Can pass in flag for "minimal view" mode (for stripping out noise in screenshots)
+                        app.gameBoardController.OnStartGame(isMinimalViewMode);
                         break;
                     default:
                         $("#dice-pan").hide();

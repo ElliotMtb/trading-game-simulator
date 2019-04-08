@@ -4,23 +4,23 @@ app.HexBuilder = (function() {
 
     function HexBuilder() {}
 
-    function HexBuilder_BuildHex(hexId, hexInfo, arcEndX, arcEndY, kineticLayer) {
+    function HexBuilder_BuildHex(hexId, hexInfo, arcEndX, arcEndY, kineticLayer, options) {
 
         var numPiece;
         
         if (hexInfo.type == "desert")
         {
             numPiece = app.createZeroPiece();
-            createTheHex();
+            createTheHex(options.useBackgroundImages);
         }
         else
         {
             numPiece = app.nextNumPiece();
-            createTheHex();
-            createTheNumber();
+            createTheHex(options.useBackgroundImages);
+            createTheNumber(options.showNumPieces);
         }
         
-        function createTheHex() {
+        function createTheHex(useBackgroundImage) {
             
             app.ring[hexId] = new Kinetic.RegularPolygon({
                 x: arcEndX,
@@ -28,7 +28,7 @@ app.HexBuilder = (function() {
                 sides: 6,
                 radius: app.GameBoardHexRadius,
                 //fill: hexInfo.color,
-                fillPatternImage: hexInfo.image,
+                //fillPatternImage: hexInfo.image,
                 fillPatternOffset: [-78, 70],
                 hexType: hexInfo.type,
                 hexNumber: numPiece.value,
@@ -49,11 +49,14 @@ app.HexBuilder = (function() {
 
             app.ringText[hexId].hide();
             
+            if (useBackgroundImage == true) {
+                app.ring[hexId].setFillPatternImage(hexInfo.image);
+            }
             kineticLayer.add(app.ring[hexId]);
             kineticLayer.add(app.ringText[hexId]);
         }
 
-        function createTheNumber() {
+        function createTheNumber(isVisible) {
             
             app.hexNumbers[hexId] = new Kinetic.Circle({
                 x: arcEndX,
@@ -74,6 +77,11 @@ app.HexBuilder = (function() {
                 fill: numPiece.color,
             });
             
+            if (isVisible == false) {
+                app.hexNumbers[hexId].hide();
+                app.hexNumbersText[hexId].hide();
+            }
+
             kineticLayer.add(app.hexNumbers[hexId]);
             kineticLayer.add(app.hexNumbersText[hexId]);	
         }

@@ -1,6 +1,6 @@
 var ViewInitializer = (function() {
 
-    var init = function(kineticLayer) {
+    var init = function(kineticLayer, practiceHex, isMinimalViewMode) {
 
         //hexboard
 
@@ -12,7 +12,7 @@ var ViewInitializer = (function() {
         
         var gameBoardBuilder = new app.BoardBuilder.GameBoardBuilder();
 
-        gameBoardBuilder.AssembleBoard(kineticLayer);
+        gameBoardBuilder.AssembleBoard(kineticLayer, isMinimalViewMode);
 
         app.Stage.add(kineticLayer);
         kineticLayer.draw();

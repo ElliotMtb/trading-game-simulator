@@ -5,18 +5,18 @@ app.BoardBuilder = (function () {
     
     function GameBoardBuilder() {}
 
-    function GameBoardBuilder_AssembleBoard(kineticLayer) {
+    function GameBoardBuilder_AssembleBoard(kineticLayer, isMinimalViewMode) {
 
         var radiusToFirstRing = app.GameBoardHexRadius * Math.sqrt(3);
         var i;
         var initialHexId = 1;
         
         // Center hex
-        drawRing0(initialHexId, kineticLayer);
+        drawRing0(initialHexId, kineticLayer, isMinimalViewMode);
         
         var numHexes = 1;
 
-        drawHexRings(1, 3, initialHexId + numHexes, radiusToFirstRing, kineticLayer);
+        drawHexRings(1, 3, initialHexId + numHexes, radiusToFirstRing, kineticLayer, isMinimalViewMode);
 
         // TODO: It would be more seamless if this was done "inline/in-order" I suppose
         // Add resulting components to the board
@@ -33,7 +33,7 @@ app.BoardBuilder = (function () {
         );
     }
 
-    var placeNextHex = function(hexId, radiusToRing, angle, kineticLayer) {
+    var placeNextHex = function(hexId, radiusToRing, angle, kineticLayer, isMinimalViewMode) {
 
         var arcEndXYPair = app.Utility.GetXYatArcEnd(app.GameBoardCenterX, app.GameBoardCenterY, radiusToRing, angle);
 
@@ -55,8 +55,15 @@ app.BoardBuilder = (function () {
         }
         else
         {
+            var options = {useBackgroundImages: true, showNumPieces: true};
+
+            if (isMinimalViewMode == true)
+            {
+                options = {useBackgroundImages: false, showNumPieces: false}
+            }
+
             // Build next hex
-            hexBuilder.BuildHex(hexId, hexInfo, arcEndX, arcEndY, kineticLayer);
+            hexBuilder.BuildHex(hexId, hexInfo, arcEndX, arcEndY, kineticLayer, options);
         
             // Connect new intersections
             var intersectBuilder = new app.IntersectionBuilder.IntersectionBuilder(app);
@@ -66,7 +73,7 @@ app.BoardBuilder = (function () {
         }
     };
 
-    var drawRing0 = function(initialHexId, kineticLayer) {
+    var drawRing0 = function(initialHexId, kineticLayer, isMinimalViewMode) {
     
         var radiusToRing = 0;
         var i = 0;
@@ -74,10 +81,10 @@ app.BoardBuilder = (function () {
 
         var hexAngle = -1*i*2*Math.PI/numHexesInRing;
         
-        placeNextHex(initialHexId, radiusToRing, hexAngle, kineticLayer);
+        placeNextHex(initialHexId, radiusToRing, hexAngle, kineticLayer, isMinimalViewMode);
     };
     
-    var drawHexRings = function(ringStart, numRingsToDraw, hexIdStart, radiusToFirstRing, kineticLayer) {
+    var drawHexRings = function(ringStart, numRingsToDraw, hexIdStart, radiusToFirstRing, kineticLayer, isMinimalViewMode) {
         
         var radiusToNthRing;
         var ringHexOffset;
@@ -118,7 +125,7 @@ app.BoardBuilder = (function () {
 
                 var hexGuid = ringHexOffset + hexIdStart;
 
-                placeNextHex(hexGuid, radiusToNthRing, angle, kineticLayer);
+                placeNextHex(hexGuid, radiusToNthRing, angle, kineticLayer, isMinimalViewMode);
             }
 
             // Update the startId for the next ring

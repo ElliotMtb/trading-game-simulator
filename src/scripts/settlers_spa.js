@@ -113,9 +113,11 @@ var app = (function() {
         
         initGameVars();
 
+        var minimalViewMode = true;
+
         IntersectionView.initView();
         IntersectionModel.initModel();
-        SetupView.initView();
+        SetupView.initView(minimalViewMode);
         PlayerView.initView();
         Router.init();
 

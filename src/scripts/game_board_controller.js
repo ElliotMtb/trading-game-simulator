@@ -369,9 +369,18 @@ app.GameBoardController = (function() {
         console.log("INTERSECTION PIECE PLACED: " + JSON.stringify(intersect.getVertexModel()));
     }
 
-    function Controller_OnStartGame() {
+    function Controller_OnStartGame(isMinimalView) {
 
-        $("#dice-pan").show();
+        if (!isMinimalView) {
+
+            $("#dice-pan").show();
+        }
+        else {
+
+            $(".spa-shell-head").hide();
+            $(".spa-shell-main-nav").hide();
+        }
+
         $("#gameBoardContainer").show();
         $("#player-container").hide();
 
