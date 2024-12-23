@@ -85,7 +85,7 @@ app.GameBoardController = (function() {
 
     function Controller_ToggleRoadSelectMode() {
         
-        app.Proxies.RoadManager.toggleRoadsVisibility();
+        app.Proxies.RoadManager().toggleRoadsVisibility();
         app.kineticLayer.draw();
     }
 
