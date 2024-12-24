@@ -30,11 +30,11 @@ app.Proxies = (function() {
             var vertex = new Kinetic.Circle({
                 x: vertexX,
                 y: vertexY,
-                radius: 10,
+                radius: 20,
                 fill: 'grey',
                 stroke: 'black',
                 strokeWidth: 1,
-                opacity: 0.75,
+                opacity: 0.5,
                 id: intersectionId
             });
 

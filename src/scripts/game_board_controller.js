@@ -398,46 +398,46 @@ app.GameBoardController = (function() {
             isAiOnlyGame = false;
 
             if (isAiOnlyGame) {
-            // AI play
-            var numPlayers = app.playerList.length;
-
-            // TODO: Until have a better way to set up AI players
-            var x;
-            for (x = 0; x < app.playerList.models.length; x++)
-            {
-                if (x == 0)
+                // AI play 
+                var numPlayers = app.playerList.length;
+    
+                // TODO: Until have a better way to set up AI players
+                var x;
+                for (x = 0; x < app.playerList.models.length; x++)
                 {
-                    app.playerList.models[x].setAiType('homing');
+                    if (x == 0)
+                    {
+                        app.playerList.models[x].setAiType('homing');
+                    }
+                    else
+                    {
+                        app.playerList.models[x].setAiType('rudi');
+                    }
                 }
-                else
+    
+                aIsetup(numPlayers);
+    
+                app.gamePlayMachine.NextGamePhase();
+    
+                // Play x number of turns or until someone wins
+                try
                 {
-                    app.playerList.models[x].setAiType('rudi');
+                    aIPlayGame(200);
                 }
-            }
-
-            aIsetup(numPlayers);
-
-            app.gamePlayMachine.NextGamePhase();
-
-            // Play x number of turns or until someone wins
-            try
-            {
-                aIPlayGame(200);
-            }
-            catch (e) {
-
-                // Log win message
-                console.log(e);
-                // Show "win" message in control panel
-                app.controlPanelController.OnWin(e);
-                throw e;
+                catch (e) {
+    
+                    // Log win message
+                    console.log(e);
+                    // Show "win" message in control panel
+                    app.controlPanelController.OnWin(e);
+                    throw e;
                 }
             }
 
         }
     }
 
-    Controller.prototype.BindControlPanelButtons		= Controller_BindControlPanelButtons;
+    Controller.prototype.BindControlPanelButtons	= Controller_BindControlPanelButtons;
     Controller.prototype.ToggleIntersectSelectMode 	= Controller_ToggleIntersectSelectMode;
     Controller.prototype.ToggleRoadSelectMode 		= Controller_ToggleRoadSelectMode;
     Controller.prototype.ToggleHexSelectMode 		= Controller_ToggleHexSelectMode;
