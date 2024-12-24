@@ -15,5 +15,9 @@
       "es2016",
       "dom"
     ]
-  }
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/polyfills.ts"
+  ]
 }
