@@ -113,7 +113,8 @@ var app = (function() {
         
         initGameVars();
 
-        var minimalViewMode = true;
+        // How to toggle on/off minimal view, which I was using for experimentation
+        var minimalViewMode = false;
 
         IntersectionView.initView();
         IntersectionModel.initModel();

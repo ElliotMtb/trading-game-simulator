@@ -85,7 +85,7 @@ app.GameBoardController = (function() {
 
     function Controller_ToggleRoadSelectMode() {
         
-        app.Proxies.RoadManager.toggleRoadsVisibility();
+        app.Proxies.RoadManager().toggleRoadsVisibility();
         app.kineticLayer.draw();
     }
 
@@ -395,6 +395,9 @@ app.GameBoardController = (function() {
 
             app.controlPanelController.OnActivePlayerChange(playerProxy);
 
+            isAiOnlyGame = false;
+
+            if (isAiOnlyGame) {
             // AI play
             var numPlayers = app.playerList.length;
 
@@ -428,6 +431,7 @@ app.GameBoardController = (function() {
                 // Show "win" message in control panel
                 app.controlPanelController.OnWin(e);
                 throw e;
+                }
             }
 
         }
